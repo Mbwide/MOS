@@ -59,13 +59,13 @@ static mos_tcb_t idle_tcb;
 
 
 /* 初始化新创建的任务 */
-static void mos_task_init_new(mos_tcb_t *  const mos_new_tcb,	/* 任务控制块指针 */
-                              task_entry_fun 	   task_code,	/* 任务入口 */
-                              const char * const task_name,		/* 任务名称，字符串形式 */
-                              const mos_uint8_t  task_pri,		/* 任务优先级 */
-                              const mos_uint32_t parameter,		/* 任务形参 */
-                              const mos_uint32_t stack_size,	/* 任务栈大小，单位为字 */
-                              const mos_uint32_t stack_start);	/* 任务栈开始地址 */
+static void mos_task_init_new(mos_tcb_t *  const mos_new_tcb,   /* 任务控制块指针 */
+                              task_entry_fun 	   task_code,   /* 任务入口 */
+                              const char * const task_name,     /* 任务名称，字符串形式 */
+                              const mos_uint8_t  task_pri,      /* 任务优先级 */
+                              const mos_uint32_t parameter,     /* 任务形参 */
+                              const mos_uint32_t stack_size,    /* 任务栈大小，单位为字 */
+                              const mos_uint32_t stack_start);  /* 任务栈开始地址 */
 /* 空闲任务入口函数 */
 static void mos_task_idle_entry(void *p_arg);
 /* 初始化空闲任务 */
@@ -285,13 +285,14 @@ void mos_task_tickcount_increase(void)
     {
         for( ;; )
         {
+            /* 延时列表为空，设置g_mos_task_next_task_unblock_tick为可能的最大值 */
             if(mos_list_is_empty(g_mos_task_delay_list))
             {
-                /* 延时列表为空，设置g_mos_task_next_task_unblock_tick为可能的最大值 */
                 g_mos_task_next_task_unblock_tick = MOS_MAX_DELAY;
                 break;
             }
-            else     /* 延时列表不为空 */
+            /* 延时列表不为空 */
+            else     
             {
                 mos_tcb = MOS_LIST_ENTRY(g_mos_task_delay_list->next, mos_tcb_t, task_list);
 
@@ -323,13 +324,13 @@ void mos_task_tickcount_increase(void)
 /**
  * @brief 初始化新创建的任务
  */
-static void mos_task_init_new(mos_tcb_t *  const mos_new_tcb,	/* 任务控制块指针 */
-                              task_entry_fun 	   task_code,		/* 任务入口 */
-                              const char * const task_name,		/* 任务名称，字符串形式 */
-                              const mos_uint8_t  task_pri,		/* 任务优先级 */
-                              const mos_uint32_t parameter,		/* 任务形参 */
-                              const mos_uint32_t stack_size,		/* 任务栈大小，单位为字 */
-                              const mos_uint32_t stack_start)		/* 任务栈起始地址 */
+static void mos_task_init_new(mos_tcb_t *  const mos_new_tcb,  /* 任务控制块指针 */
+                              task_entry_fun 	   task_code,  /* 任务入口 */
+                              const char * const task_name,    /* 任务名称，字符串形式 */
+                              const mos_uint8_t  task_pri,     /* 任务优先级 */
+                              const mos_uint32_t parameter,	   /* 任务形参 */
+                              const mos_uint32_t stack_size,   /* 任务栈大小，单位为字 */
+                              const mos_uint32_t stack_start)  /* 任务栈起始地址 */
 {
     mos_strncpy(mos_new_tcb->task_name, task_name, MOS_CONFIG_TASK_NAMELEN);
 
@@ -353,7 +354,7 @@ static void mos_task_init_new(mos_tcb_t *  const mos_new_tcb,	/* 任务控制块指针 
     }
 
     mos_new_tcb->task_tick_wake = 0UL;
-    mos_new_tcb->task_state = 0;	//临时
+    mos_new_tcb->task_state = 0;  //临时
     mos_list_init(&mos_new_tcb->task_list);
 }
 
