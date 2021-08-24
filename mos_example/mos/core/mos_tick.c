@@ -26,7 +26,7 @@
   *
   ******************************************************************************
   */
-  
+
 #include "mos_tick.h"
 #include "mos_sys.h"
 #include "mos_task.h"
@@ -34,14 +34,14 @@
 /* Public Fun-----------------------------------------------------------------*/
 void mos_tick_systick_handler(void)
 {
-	/* 进入中断 */ 
-	mos_sys_interrupt_enter();
-	
-	/* 时基更新 */ 
-	mos_task_tickcount_increase();
-	
-	/* 离开中断 */
-	mos_sys_interrupt_leave();
+    /* 进入中断 */
+    mos_sys_interrupt_enter();
+
+    /* 时基更新 */
+    mos_task_tickcount_increase();
+
+    /* 离开中断 */
+    mos_sys_interrupt_leave();
 }
 
 

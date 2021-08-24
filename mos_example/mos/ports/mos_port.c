@@ -35,13 +35,13 @@
 
 void mos_port_systick_init(void)
 {
-	/* SysTick中断频率设置 */
+    /* SysTick中断频率设置 */
     SysTick_Config( SystemCoreClock / MOS_CONFIG_TICK_PER_SECOND );
 }
 
 //void SVC_Handler(void)
 //{
-//	
+//
 //}
 
 
@@ -53,6 +53,6 @@ void mos_port_systick_init(void)
 
 void SysTick_Handler(void)
 {
-	mos_tick_systick_handler();
+    mos_tick_systick_handler();
 }
 

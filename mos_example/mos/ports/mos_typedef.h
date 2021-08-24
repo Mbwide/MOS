@@ -34,39 +34,39 @@
 #include "mos_user_config.h"
 
 
-/*基础数据类型重定义*/ 
-typedef signed   char                   mos_int8_t; 
-typedef signed   short                  mos_int16_t; 
-typedef signed   int					mos_int32_t; 
-typedef unsigned char					mos_uint8_t; 
-typedef unsigned short					mos_uint16_t; 
-typedef unsigned int					mos_uint32_t; 
-typedef unsigned int					mos_bool_t;    
+/*基础数据类型重定义*/
+typedef signed   char                   mos_int8_t;
+typedef signed   short                  mos_int16_t;
+typedef signed   int					mos_int32_t;
+typedef unsigned char					mos_uint8_t;
+typedef unsigned short					mos_uint16_t;
+typedef unsigned int					mos_uint32_t;
+typedef unsigned int					mos_bool_t;
 
-typedef unsigned int                    mos_tick_t; 
-typedef unsigned int					mos_err_t; 
+typedef unsigned int                    mos_tick_t;
+typedef unsigned int					mos_err_t;
 
-typedef unsigned long					mos_ubase_t; 
-typedef signed   long					mos_base_t; 
+typedef unsigned long					mos_ubase_t;
+typedef signed   long					mos_base_t;
 
 
-#ifdef __CC_ARM 
-#define MOS_INLINE						static __inline 
-#define ALIGN(n)                    	__attribute__((aligned(n))) 
+#ifdef __CC_ARM
+    #define MOS_INLINE						static __inline
+    #define ALIGN(n)                    	__attribute__((aligned(n)))
 #endif
 
 /**
  *size向上按照align字节对齐 MOS_ALIGN_UP(9, 4) return 12
  */
-#define MOS_ALIGN_UP(data, align)      (((data) + (align) - 1) & ~((align) - 1)) 
+#define MOS_ALIGN_UP(data, align)      (((data) + (align) - 1) & ~((align) - 1))
 
 /**
  *size向下按照align字节对齐 MOS_ALIGN_DOWN(7, 4) return 4
  */
-#define MOS_ALIGN_DOWN(data, align)    ((data) & ~((align) - 1)) 
- 
+#define MOS_ALIGN_DOWN(data, align)    ((data) & ~((align) - 1))
 
-/*其他数据类型定义 */ 
+
+/*其他数据类型定义 */
 #define TRUE							(1)
 #define FALSE							(0)
 

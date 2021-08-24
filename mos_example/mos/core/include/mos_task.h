@@ -42,21 +42,21 @@ typedef void (*task_entry_fun)(void);
 /* 任务控制块定义 */
 typedef struct mos_task_control_block
 {
-	
-	volatile void	*stack_pointer;							/* 任务栈指针sp */	
-	char			task_name[MOS_CONFIG_TASK_NAMELEN];		/* 任务名字 */
-	task_entry_fun	task_entry;								/* 任务入口函数 */
-	mos_uint32_t	task_param;								/* 任务形参 */
-	
-	mos_uint32_t	stack_top;								/* 任务栈顶地址,低地址 */ 
-	mos_uint32_t	stack_size;								/* 任务栈大小 */ 	
-	
-	mos_uint16_t	task_priority;							/* 任务优先级 */ 	
-	mos_uint16_t	task_state;								/* 任务状态*/ 	
-	
-	mos_uint32_t	task_tick_wake;							/* 任务唤醒时间*/
- 	mos_uint32_t	task_tick_wake_over;					/* 任务唤醒时间溢出标志位*/ 
-	mos_list_t 		task_list;								/* 任务所处链表*/ 							
+
+    volatile void	*stack_pointer;							/* 任务栈指针sp */
+    char			task_name[MOS_CONFIG_TASK_NAMELEN];		/* 任务名字 */
+    task_entry_fun	task_entry;								/* 任务入口函数 */
+    mos_uint32_t	task_param;								/* 任务形参 */
+
+    mos_uint32_t	stack_top;								/* 任务栈顶地址,低地址 */
+    mos_uint32_t	stack_size;								/* 任务栈大小 */
+
+    mos_uint16_t	task_priority;							/* 任务优先级 */
+    mos_uint16_t	task_state;								/* 任务状态*/
+
+    mos_uint32_t	task_tick_wake;							/* 任务唤醒时间*/
+    mos_uint32_t	task_tick_wake_over;					/* 任务唤醒时间溢出标志位*/
+    mos_list_t 		task_list;								/* 任务所处链表*/
 
 } mos_tcb_t;
 
@@ -67,28 +67,28 @@ mos_err_t mos_task_create(	mos_tcb_t *  const task_tcb,	/* 任务控制块指针 */
                             task_entry_fun 	   task_code,	/* 任务入口 */
                             const char * const task_name,	/* 任务名称，字符串形式 */
                             const mos_uint8_t  task_pri,	/* 任务优先级 */
-							const mos_uint32_t parameter,	/* 任务形参 */
+                            const mos_uint32_t parameter,	/* 任务形参 */
                             const mos_uint32_t stack_size,	/* 任务栈大小，单位为字 */
                             const mos_uint32_t stack_start);/* 任务栈起始地址 */
 /* 任务调度器初始化 */
 mos_err_t mos_task_scheduler_init(void);
-/* 第一次开启任务调度 */					
+/* 第一次开启任务调度 */
 mos_err_t mos_task_scheduler_start(void);
 /* 任务调度 */
-mos_err_t mos_task_scheduler(void);	
-/* 任务选择,即更新当前运行任务 */							
+mos_err_t mos_task_scheduler(void);
+/* 任务选择,即更新当前运行任务 */
 void mos_task_switch_context(void);
 
-/* 任务延时 */						
+/* 任务延时 */
 void mos_task_delay(const mos_uint32_t tick);
 
-/* 将任务插入就绪列表 */								
-void mos_task_insert_ready_table_list(mos_list_t *task_list_ready_table, mos_tcb_t *mos_tcb);						
-/* 将任务从就绪列表删除 */	
+/* 将任务插入就绪列表 */
+void mos_task_insert_ready_table_list(mos_list_t *task_list_ready_table, mos_tcb_t *mos_tcb);
+/* 将任务从就绪列表删除 */
 void mos_task_remove_ready_table_list(mos_list_t *task_list_ready_table, mos_tcb_t *mos_tcb);
 
-/* 系统当前时基计数器计数增加 */	
-void mos_task_tickcount_increase(void);	
-							
+/* 系统当前时基计数器计数增加 */
+void mos_task_tickcount_increase(void);
+
 #endif /* _MOS_TASK_H */
 

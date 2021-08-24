@@ -28,8 +28,8 @@
   ******************************************************************************
   */
 
-#include "mos_hw.h"	
-#include "mos_misc.h"		
+#include "mos_hw.h"
+#include "mos_misc.h"
 
 
 /* Private Fun----------------------------------------------------------------*/
@@ -41,20 +41,20 @@ static void mos_hw_task_exit_error( void )
 
 
 /* Public Fun-----------------------------------------------------------------*/
-void *mos_hw_stack_init(void *tentry, 
-						mos_uint32_t parameter,
-						mos_uint32_t stack_bottom)
-{	
-	task_hw_context_t 	*task_context;
-	mos_uint8_t 		*sp;
-	stack_bottom = MOS_ALIGN_DOWN(stack_bottom, 4);
-	
-	sp = (mos_uint8_t *)(stack_bottom - sizeof(task_hw_context_t) + 4);
-	task_context = (task_hw_context_t *)(sp);
+void *mos_hw_stack_init(void *tentry,
+                        mos_uint32_t parameter,
+                        mos_uint32_t stack_bottom)
+{
+    task_hw_context_t 	*task_context;
+    mos_uint8_t 		*sp;
+    stack_bottom = MOS_ALIGN_DOWN(stack_bottom, 4);
 
-	mos_memset(task_context, 0xCC, sizeof(task_hw_context_t));
-	
-	task_context->r4  = 0x04040404L;
+    sp = (mos_uint8_t *)(stack_bottom - sizeof(task_hw_context_t) + 4);
+    task_context = (task_hw_context_t *)(sp);
+
+    mos_memset(task_context, 0xCC, sizeof(task_hw_context_t));
+
+    task_context->r4  = 0x04040404L;
     task_context->r5  = 0x05050505L;
     task_context->r6  = 0x06060606L;
     task_context->r7  = 0x07070707L;
@@ -62,7 +62,7 @@ void *mos_hw_stack_init(void *tentry,
     task_context->r9  = 0x09090909L;
     task_context->r10 = 0x10101010L;
     task_context->r11 = 0x11111111L;
-    
+
     task_context->r0  = parameter;
     task_context->r1  = 0x01010101L;
     task_context->r2  = 0x02020202L;
@@ -71,5 +71,5 @@ void *mos_hw_stack_init(void *tentry,
     task_context->lr  = (mos_uint32_t)mos_hw_task_exit_error;
     task_context->pc  = (mos_uint32_t)tentry & 0xfffffffeUL;
     task_context->psr = 0x01000000L;
-	return (void *)sp;
+    return (void *)sp;
 }

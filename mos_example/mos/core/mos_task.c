@@ -60,12 +60,12 @@ static mos_tcb_t idle_tcb;
 
 /* 初始化新创建的任务 */
 static void mos_task_init_new(mos_tcb_t *  const mos_new_tcb,	/* 任务控制块指针 */
-                              task_entry_fun 	   task_code,		/* 任务入口 */
+                              task_entry_fun 	   task_code,	/* 任务入口 */
                               const char * const task_name,		/* 任务名称，字符串形式 */
                               const mos_uint8_t  task_pri,		/* 任务优先级 */
                               const mos_uint32_t parameter,		/* 任务形参 */
-                              const mos_uint32_t stack_size,		/* 任务栈大小，单位为字 */
-                              const mos_uint32_t stack_start);
+                              const mos_uint32_t stack_size,	/* 任务栈大小，单位为字 */
+                              const mos_uint32_t stack_start);	/* 任务栈开始地址 */
 /* 空闲任务入口函数 */
 static void mos_task_idle_entry(void *p_arg);
 /* 初始化空闲任务 */
@@ -75,7 +75,7 @@ static void mos_task_insert_delay_list(mos_list_t *delay_list, mos_list_t *node,
 /* 任务延时处理 */
 static void mos_task_delay_process(const mos_uint32_t tick);
 /* 系统时基计数器溢出后切换延时列表 */
-static void mos_task_switch_delay_list(void);							  
+static void mos_task_switch_delay_list(void);
 /* 切换延时列表后复位下一个任务阻塞时间 */
 static void mos_task_reset_next_task_unblock_time(void);
 
@@ -291,7 +291,7 @@ void mos_task_tickcount_increase(void)
                 g_mos_task_next_task_unblock_tick = MOS_MAX_DELAY;
                 break;
             }
-            else /* 延时列表不为空 */
+            else     /* 延时列表不为空 */
             {
                 mos_tcb = MOS_LIST_ENTRY(g_mos_task_delay_list->next, mos_tcb_t, task_list);
 
@@ -394,8 +394,8 @@ static void mos_task_insert_delay_list(mos_list_t *delay_list, mos_list_t *task_
     mos_list_t *iterator;
     mos_tcb_t  *mos_delay_tcb;
     iterator = delay_list;
-	
-	/* 按照唤醒时间task_tick_wake从小到大找到task_node插入点 */
+
+    /* 按照唤醒时间task_tick_wake从小到大找到task_node插入点 */
     while (iterator->next != delay_list)
     {
         mos_delay_tcb = MOS_LIST_ENTRY(iterator->next, mos_tcb_t, task_list);
@@ -408,7 +408,7 @@ static void mos_task_insert_delay_list(mos_list_t *delay_list, mos_list_t *task_
         iterator = iterator->next;
     }
 
-	/* 将任务插入延时列表 */
+    /* 将任务插入延时列表 */
     mos_list_head_insert(iterator, task_node);
 }
 
@@ -455,16 +455,16 @@ static void mos_task_delay_process(const mos_uint32_t tick)
  */
 static void mos_task_switch_delay_list(void)
 {
-	/* 交换任务延时列表指针和任务延时溢出列表指针 */
+    /* 交换任务延时列表指针和任务延时溢出列表指针 */
     mos_list_t *list_temp;
     list_temp = g_mos_task_delay_list;
     g_mos_task_delay_list = g_mos_task_delay_overflow_list;
     g_mos_task_delay_overflow_list = list_temp;
-	
-	/* 任务溢出次数计数 */
+
+    /* 任务溢出次数计数 */
     /* g_num_of_over_flow++; */
-	
-	/* 切换延时列表后复位下一个任务阻塞时间 */
+
+    /* 切换延时列表后复位下一个任务阻塞时间 */
     mos_task_reset_next_task_unblock_time();
 }
 
@@ -475,12 +475,12 @@ static void mos_task_reset_next_task_unblock_time(void)
 {
     mos_tcb_t *mos_tcb;
 
-	/* 新延时列表为空时设置阻塞时间为最大值 */
+    /* 新延时列表为空时设置阻塞时间为最大值 */
     if(mos_list_is_empty(g_mos_task_delay_list))
     {
         g_mos_task_next_task_unblock_tick = MOS_MAX_DELAY;
     }
-	/* 新延时列表不为空时获取下一个任务阻塞时间*/
+    /* 新延时列表不为空时获取下一个任务阻塞时间*/
     else
     {
         mos_tcb = MOS_LIST_ENTRY(g_mos_task_delay_list->next, mos_tcb_t, task_list);

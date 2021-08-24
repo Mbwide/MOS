@@ -37,38 +37,38 @@
  *获取成员member在结构体类型type的偏移量
  */
 #define MOS_OFFSET_OF(type, member) \
-				((unsigned long)(&((type *)0)->member))
+    ((unsigned long)(&((type *)0)->member))
 
 /**
  *根据链表类型member的实例地址ptr获取包含该成员的type型结构体实例的入口地址
  */
 #define MOS_LIST_ENTRY(ptr, type, member) \
-				((type *)((char *)ptr - MOS_OFFSET_OF(type, member)))
+    ((type *)((char *)ptr - MOS_OFFSET_OF(type, member)))
 
 /**
  *双向链表头初始化
  */
 #define MOS_LIST_HEAD(list) \
-				mos_list_t list = { &(list), &(list) }
+    mos_list_t list = { &(list), &(list) }
 
-				
-/* Public Fun-----------------------------------------------------------------*/				
+
+/* Public Fun-----------------------------------------------------------------*/
 /**
  *双向链表结构体
  */
-typedef struct mos_list_node 
-{ 
-    struct mos_list_node *next; /* 指向后一个节点 */ 
-    struct mos_list_node *prev; /* 指向前一个节点 */ 
-} mos_list_t; 
+typedef struct mos_list_node
+{
+    struct mos_list_node *next; /* 指向后一个节点 */
+    struct mos_list_node *prev; /* 指向前一个节点 */
+} mos_list_t;
 
 /**
  * @brief 双向链表初始化
  */
 MOS_INLINE void mos_list_init(mos_list_t *list)
 {
-	list->next = list;
-	list->prev = list;
+    list->next = list;
+    list->prev = list;
 }
 
 /**
@@ -76,11 +76,11 @@ MOS_INLINE void mos_list_init(mos_list_t *list)
  */
 MOS_INLINE void mos_list_head_insert(mos_list_t *list, mos_list_t *node)
 {
-	node->next = list->next;
-	node->prev = list;
-	
-	list->next->prev = node;
-	list->next = node;
+    node->next = list->next;
+    node->prev = list;
+
+    list->next->prev = node;
+    list->next = node;
 }
 
 /**
@@ -88,11 +88,11 @@ MOS_INLINE void mos_list_head_insert(mos_list_t *list, mos_list_t *node)
  */
 MOS_INLINE void mos_list_tail_insert(mos_list_t *list, mos_list_t *node)
 {
-	node->next = list;
-	node->prev = list->prev;
-	
-	list->prev->next = node;
-	list->prev = node;
+    node->next = list;
+    node->prev = list->prev;
+
+    list->prev->next = node;
+    list->prev = node;
 }
 
 /**
@@ -100,19 +100,19 @@ MOS_INLINE void mos_list_tail_insert(mos_list_t *list, mos_list_t *node)
  */
 MOS_INLINE void mos_list_node_delete(mos_list_t *node)
 {
-	node->prev->next = node->next;
-	node->next->prev = node->prev; 
-	
-	node->prev = node->next = node;
-	
+    node->prev->next = node->next;
+    node->next->prev = node->prev;
+
+    node->prev = node->next = node;
+
 }
 
 /**
- * @brief 判断链表是否为空 
+ * @brief 判断链表是否为空
  */
 MOS_INLINE mos_bool_t mos_list_is_empty(mos_list_t *node)
 {
-	return (mos_bool_t)(node->next == node);
+    return (mos_bool_t)(node->next == node);
 }
 
 #endif /* _MOS_LIST_H */

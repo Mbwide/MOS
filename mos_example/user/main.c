@@ -71,7 +71,7 @@ void task3_entry(void *p_arg)
 }
 /**
   * @brief  Ö÷º¯Êý
-  * 
+  *
   * @note
   */
 int main()

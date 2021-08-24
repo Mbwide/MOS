@@ -27,7 +27,7 @@
   *
   ******************************************************************************
   */
-  
+
 #ifndef _MOS_HW_H
 #define _MOS_HW_H
 #include "mos_typedef.h"
@@ -44,9 +44,9 @@ typedef struct task_hw_context
     mos_uint32_t r9;
     mos_uint32_t r10;
     mos_uint32_t r11;
-	
-	/* 自动出入栈寄存器 */
-	mos_uint32_t r0;
+
+    /* 自动出入栈寄存器 */
+    mos_uint32_t r0;
     mos_uint32_t r1;
     mos_uint32_t r2;
     mos_uint32_t r3;
@@ -54,14 +54,14 @@ typedef struct task_hw_context
     mos_uint32_t lr;
     mos_uint32_t pc;
     mos_uint32_t psr;
-    
+
 } task_hw_context_t;
 
 
 /* Public Fun-----------------------------------------------------------------*/
-void *mos_hw_stack_init(void *tentry, 
-						mos_uint32_t parameter,
-						mos_uint32_t stack_top);
+void *mos_hw_stack_init(void *tentry,
+                        mos_uint32_t parameter,
+                        mos_uint32_t stack_top);
 
 
 

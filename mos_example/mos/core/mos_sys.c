@@ -44,16 +44,16 @@ volatile mos_uint8_t g_mos_interrupt_nest;
  */
 void mos_sys_interrupt_enter(void)
 {
-	mos_base_t temp;
-	 
-	/* 进入临界区 */
-	temp = mos_port_entry_critical();
-	 
-	/* 中断嵌套计数器++ */
-	g_mos_interrupt_nest++;
-	
-	/* 退出临界区 */
-	mos_port_exit_critical(temp);	
+    mos_base_t temp;
+
+    /* 进入临界区 */
+    temp = mos_port_entry_critical();
+
+    /* 中断嵌套计数器++ */
+    g_mos_interrupt_nest++;
+
+    /* 退出临界区 */
+    mos_port_exit_critical(temp);
 }
 
 /**
@@ -63,15 +63,15 @@ void mos_sys_interrupt_enter(void)
  */
 void mos_sys_interrupt_leave(void)
 {
-	mos_base_t temp;
-	
-	/* 进入临界区 */
-	temp = mos_port_entry_critical();
-	
-	/* 中断嵌套计数器++ */
-	g_mos_interrupt_nest--;
-	
-	/* 退出临界区 */
-	mos_port_exit_critical(temp);
+    mos_base_t temp;
+
+    /* 进入临界区 */
+    temp = mos_port_entry_critical();
+
+    /* 中断嵌套计数器++ */
+    g_mos_interrupt_nest--;
+
+    /* 退出临界区 */
+    mos_port_exit_critical(temp);
 }
 

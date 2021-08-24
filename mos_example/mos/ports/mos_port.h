@@ -35,10 +35,10 @@
 /* define --------------------------------------------------------------------*/
 /* 进入临界区 */
 #define mos_port_entry_critical() \
-			mos_port_interrupt_disable()
-/* 退出临界区 */			
+    mos_port_interrupt_disable()
+/* 退出临界区 */
 #define mos_port_exit_critical(x) \
-			mos_port_interrupt_enable(x)			
+    mos_port_interrupt_enable(x)
 
 
 /* Public Fun-----------------------------------------------------------------*/
