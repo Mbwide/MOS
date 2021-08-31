@@ -9,6 +9,7 @@
   *
   ******************************************************************************
   */
+#include "mos_typedef.h"
 
 #ifndef __MOS_USER_CONFIG_H__
 #define __MOS_USER_CONFIG_H__
@@ -27,5 +28,8 @@
 
 /* 配置系统时钟周期 */
 #define MOS_CONFIG_TICK_PER_SECOND	    	(100)
+
+/* 是否使用时间片轮转调度 */
+#define MOS_CONFIG_USE_TIME_SLICING		    (NO)
 
 #endif /* __MOS_USER_CONFIG_H__ */

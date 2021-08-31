@@ -38,7 +38,11 @@ void mos_tick_systick_handler(void)
     mos_sys_interrupt_enter();
 
     /* 时基更新 */
-    mos_task_tickcount_increase();
+    if (mos_task_tickcount_increase() == TRUE)
+	{
+		/* 任务调度 */
+		mos_task_scheduler();
+	}
 
     /* 离开中断 */
     mos_sys_interrupt_leave();

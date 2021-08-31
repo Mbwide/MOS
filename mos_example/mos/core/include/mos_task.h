@@ -88,7 +88,7 @@ void mos_task_insert_ready_table_list(mos_list_t *task_list_ready_table, mos_tcb
 void mos_task_remove_ready_table_list(mos_list_t *task_list_ready_table, mos_tcb_t *mos_tcb);
 
 /* 系统当前时基计数器计数增加 */
-void mos_task_tickcount_increase(void);
+mos_bool_t mos_task_tickcount_increase(void);
 
 #endif /* _MOS_TASK_H */
 

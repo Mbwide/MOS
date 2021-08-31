@@ -31,8 +31,6 @@
 #ifndef _MOS_TYPEDEF_H
 #define _MOS_TYPEDEF_H
 
-#include "mos_user_config.h"
-
 
 /*基础数据类型重定义*/
 typedef signed   char                   mos_int8_t;

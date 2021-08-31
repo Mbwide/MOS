@@ -95,15 +95,25 @@ mos_tcb_t * volatile g_cur_task_tcb = NULL;
 /**
  * @brief 根据优先级标志位更改当前正在运行任务的任务控制块
  */
-#define mos_task_select_highest_priority()  \
-    { 	\
-        mos_ubase_t	top_priority; \
-        mos_get_highest_priority(top_priority, g_mos_task_priority_flag_32bit); \
-        g_cur_task_tcb = MOS_LIST_ENTRY(g_mos_task_list_ready_table[top_priority].next, mos_tcb_t, task_list); \
-        mos_list_node_delete(&(g_cur_task_tcb->task_list)); \
-        mos_list_tail_insert(&g_mos_task_list_ready_table[top_priority], &(g_cur_task_tcb->task_list));  \
-    } 	\
-
+#if (MOS_CONFIG_USE_TIME_SLICING == YES) 
+	#define mos_task_select_highest_priority()  \
+		{ 	\
+			mos_ubase_t	top_priority; \
+			mos_get_highest_priority(top_priority, g_mos_task_priority_flag_32bit); \
+			g_cur_task_tcb = MOS_LIST_ENTRY(g_mos_task_list_ready_table[top_priority].next, mos_tcb_t, task_list); \
+			mos_list_node_delete(&(g_cur_task_tcb->task_list)); \
+			mos_list_tail_insert(&g_mos_task_list_ready_table[top_priority], &(g_cur_task_tcb->task_list)); \
+		} 	\
+		
+#else
+	#define mos_task_select_highest_priority()  \
+		{ 	\
+			mos_ubase_t	top_priority; \
+			mos_get_highest_priority(top_priority, g_mos_task_priority_flag_32bit); \
+			g_cur_task_tcb = MOS_LIST_ENTRY(g_mos_task_list_ready_table[top_priority].next, mos_tcb_t, task_list); \
+		} 	\
+		
+#endif
 
 /* Public Fun-----------------------------------------------------------------*/
 /**
@@ -260,23 +270,32 @@ void mos_task_remove_ready_table_list(mos_list_t *task_list_ready_table, mos_tcb
     mos_list_node_delete(&(mos_tcb->task_list));
 
     /* 将任务在优先级位图中对应的位清除 */
-    if (mos_list_is_empty(&(task_list_ready_table[mos_tcb->task_priority])))
+#if (MOS_CONFIG_USE_TIME_SLICING == YES) 
+	if (mos_list_is_empty(&(task_list_ready_table[mos_tcb->task_priority])))
     {
         g_mos_task_priority_flag_32bit &= ~(1UL << (31UL - mos_tcb->task_priority));
-
-    }
+    }	
+#else
+	g_mos_task_priority_flag_32bit &= ~(1UL << (31UL - mos_tcb->task_priority));	
+#endif
+    
 }
 
 /**
- * @brief 系统当前时基计数器计数增加
+ * @brief  系统当前时基计数器计数增加
+ *
+ * @return 是否执行任务调度函数
  */
-void mos_task_tickcount_increase(void)
+mos_bool_t mos_task_tickcount_increase(void)
 {
     mos_tcb_t *mos_tcb;
     g_mos_task_cur_tick_count++;
-
-    /* 如果xConstTickCount溢出，则切换延时列表 */
-    if( g_mos_task_cur_tick_count == (mos_tick_t)0U)
+	
+	/*是否调度*/
+    mos_bool_t switch_flag = FALSE;
+	
+    /* 如果g_mos_task_cur_tick_count溢出，则切换延时列表 */
+    if(g_mos_task_cur_tick_count == (mos_tick_t)0U)
     {
         mos_task_switch_delay_list();
     }
@@ -297,9 +316,9 @@ void mos_task_tickcount_increase(void)
                 mos_tcb = MOS_LIST_ENTRY(g_mos_task_delay_list->next, mos_tcb_t, task_list);
 
                 /* 直到将延时列表中所有延时到期的任务移除才跳出for循环 */
-                if(g_mos_task_cur_tick_count < mos_tcb-> task_tick_wake)
+                if(g_mos_task_cur_tick_count < mos_tcb->task_tick_wake)
                 {
-                    g_mos_task_next_task_unblock_tick = g_mos_task_cur_tick_count;
+                    g_mos_task_next_task_unblock_tick = mos_tcb-> task_tick_wake;
                     break;
                 }
 
@@ -308,15 +327,27 @@ void mos_task_tickcount_increase(void)
                 /* 重置任务控制块的task_tick_wake */
                 mos_tcb->task_tick_wake = 0L;
 
+				/* 有更高优先级任务，需要任务切换 */
+				if (g_cur_task_tcb->task_priority > mos_tcb->task_priority) 
+				{
+					/* 系统调度标志 */
+					switch_flag = TRUE;	
+				}
                 /* 将解除等待的任务添加到就绪列表 */
                 mos_task_insert_ready_table_list(g_mos_task_list_ready_table, mos_tcb);
-
             }
-        }
+		}
     }
 
-    /* 系统调度 */
-    mos_task_scheduler();
+	/* 使用时间片，每次都要执行调度程序 */
+	#if (MOS_CONFIG_USE_TIME_SLICING == YES) 
+	{
+		/* 系统调度标志 */
+		switch_flag = TRUE;		
+	}			
+	#endif
+	
+	return switch_flag;
 }
 
 
