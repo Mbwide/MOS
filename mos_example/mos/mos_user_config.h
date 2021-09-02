@@ -11,8 +11,8 @@
   */
 #include "mos_typedef.h"
 
-#ifndef __MOS_USER_CONFIG_H__
-#define __MOS_USER_CONFIG_H__
+#ifndef _MOS_USER_CONFIG_H__
+#define _MOS_USER_CONFIG_H__
 
 /* 配置字节对齐值 */
 #define MOS_CONFIG_ALIGN_SIZE				(4)
@@ -27,7 +27,7 @@
 #define MOS_CONFIG_TASK_IDLE_STACK_SIZE		(512)
 
 /* 配置系统时钟周期 */
-#define MOS_CONFIG_TICK_PER_SECOND	    	(100)
+#define MOS_CONFIG_TICK_PER_SECOND	    	(1000)
 
 /* 是否使用时间片轮转调度 */
 #define MOS_CONFIG_USE_TIME_SLICING		    (NO)

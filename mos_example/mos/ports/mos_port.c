@@ -27,16 +27,16 @@
   *
   ******************************************************************************
   */
-
+  
 #include "mos_port.h"
 #include "mos_tick.h"
 #include "mos_user_config.h"
-#include "ARMCM4.h"
 
+#include "ARMCM4.h"
 void mos_port_systick_init(void)
 {
     /* SysTick÷–∂œ∆µ¬ …Ë÷√ */
-    SysTick_Config( SystemCoreClock / MOS_CONFIG_TICK_PER_SECOND );
+    SysTick_Config(SystemCoreClock / MOS_CONFIG_TICK_PER_SECOND);
 }
 
 //void SVC_Handler(void)
@@ -44,12 +44,10 @@ void mos_port_systick_init(void)
 //
 //}
 
-
 //void PendSV_Handler(void)
 //{
 //	mos_port_pendsv_handler();
 //}
-
 
 void SysTick_Handler(void)
 {
