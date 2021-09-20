@@ -15,63 +15,29 @@
   * GNU General Public License for more details.
   ******************************************************************************
   */
-
 /**
   ******************************************************************************
-  * @file    mos_sys.c
+  * @file    mos_heap.h
   * @version V1.0.0
-  * @date    2021-08-20
-  * @brief   系统支持
+  * @date    2021-09-10
+  * @brief   动态内存管理
   ******************************************************************************
   * @note
   *
   ******************************************************************************
   */
+#ifndef _MOS_HEAP_H
+#define _MOS_HEAP_H
 
-#include "mos_sys.h"
-#include "mos_port.h"
-
-
-/* Public --------------------------------------------------------------------*/
-volatile mos_uint8_t g_mos_interrupt_nest;
-
+#include "mos_typedef.h"
 
 /* Public Fun-----------------------------------------------------------------*/
-/**
- * @brief 中断服务函数进入时会调用该函数，中断嵌套计数加
- *
- * @note 不要在应用程序中调用该函数
- */
-void mos_sys_interrupt_enter(void)
-{
-    mos_base_t temp;
+/* 内存池初始化 */
+void mos_heap_init(void);
+/* 内存申请 */
+void *mos_malloc(mos_ubase_t need_size);
+/* 内存施放 */
+void mos_free(void *mem_add);
 
-    /* 进入临界区 */
-    temp = mos_port_entry_critical_irq();
-
-    /* 中断嵌套计数器++ */
-    g_mos_interrupt_nest++;
-
-    /* 退出临界区 */
-    mos_port_exit_critical_irq(temp);
-}
-
-/**
- * @brief 中断服务函数进入时会调用该函数，中断嵌套计数减
- *
- * @note 不要在应用程序中调用该函数
- */
-void mos_sys_interrupt_leave(void)
-{
-    mos_base_t temp;
-
-    /* 进入临界区 */
-    temp = mos_port_entry_critical_irq();
-
-    /* 中断嵌套计数器++ */
-    g_mos_interrupt_nest--;
-
-    /* 退出临界区 */
-    mos_port_exit_critical_irq(temp);
-}
+#endif /* _MOS_HEAP_H */
 

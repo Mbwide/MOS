@@ -427,6 +427,11 @@
               <FileType>1</FileType>
               <FilePath>..\mos\core\mos_tick.c</FilePath>
             </File>
+            <File>
+              <FileName>mos_heap.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\mos\core\mos_heap.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

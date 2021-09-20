@@ -46,7 +46,7 @@ void mos_port_systick_init(void)
 
 //void PendSV_Handler(void)
 //{
-//	mos_port_pendsv_handler();
+//	s_PendSV_Handler();
 //}
 
 void SysTick_Handler(void)

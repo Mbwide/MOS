@@ -39,6 +39,15 @@
 /* 任务入口函数定义 */
 typedef void (*task_entry_fun)(void);
 
+/* 任务状态 */ 
+typedef enum TASK_STATE
+{
+	TASK_RUN = 1, /* 运行态 */
+	TASK_READY,   /* 就绪态 */ 
+	TASK_BLOCK,   /* 阻塞态 */ 
+	TASK_SUSPEND  /* 挂起态 */ 
+} TASK_STATE_T;
+
 /* 任务控制块定义 */
 typedef struct mos_task_control_block
 {
@@ -56,20 +65,29 @@ typedef struct mos_task_control_block
 
     mos_uint32_t	task_tick_wake;							/* 任务唤醒时间*/
     mos_uint32_t	task_tick_wake_over;					/* 任务唤醒时间溢出标志位*/
-    mos_list_t 		task_list;								/* 任务所处链表*/
+    mos_list_t 		task_list;								/* 任务所处调度链表*/   
+	mos_list_t 		task_ipc_list;							/* 任务所处任务间通信链表*/
 
 } mos_tcb_t;
 
-
 /* Public Fun-----------------------------------------------------------------*/
-/* 任务创建 */
-mos_err_t mos_task_create(	mos_tcb_t *  const task_tcb,	/* 任务控制块指针 */
-                            task_entry_fun 	   task_code,	/* 任务入口 */
-                            const char * const task_name,	/* 任务名称，字符串形式 */
-                            const mos_uint8_t  task_pri,	/* 任务优先级 */
-                            const mos_uint32_t parameter,	/* 任务形参 */
-                            const mos_uint32_t stack_size,	/* 任务栈大小，单位为字 */
-                            const mos_uint32_t stack_start);/* 任务栈起始地址 */
+#if MOS_CONFIG_USE_DYNAMIC_HEAP	
+/* 动态任务创建 */
+mos_err_t mos_task_create(mos_tcb_t *  const task_tcb,	    /* 任务控制块指针 */
+                          task_entry_fun 	 task_code,	    /* 任务入口 */
+                          const mos_uint8_t  task_pri,	    /* 任务优先级 */
+                          const mos_uint32_t stack_size);   /* 任务栈大小，单位为字 */
+#else 	
+/* 静态任务创建 */
+mos_err_t mos_task_create(mos_tcb_t *  const task_tcb,	    /* 任务控制块指针 */
+                          task_entry_fun 	   task_code,	/* 任务入口 */
+                          //const char * const task_name,	/* 任务名称，字符串形式 */
+                          const mos_uint8_t  task_pri,	    /* 任务优先级 */
+                          //const mos_uint32_t parameter,	/* 任务形参 */
+                          const mos_uint32_t stack_size,	/* 任务栈大小，单位为字 */
+                          const mos_uint32_t stack_start);  /* 任务栈起始地址 */
+#endif
+
 /* 任务调度器初始化 */
 mos_err_t mos_task_scheduler_init(void);
 /* 第一次开启任务调度 */
@@ -79,14 +97,20 @@ mos_err_t mos_task_scheduler(void);
 /* 任务选择,即更新当前运行任务 */
 void mos_task_switch_context(void);
 
+
 /* 任务延时 */
 void mos_task_delay(const mos_uint32_t tick);
+
+
+/* 将任务挂起 */
+void mos_task_suspend(mos_tcb_t * to_suspend_task);
+/* 将任务恢复 */
+void mos_task_resume(mos_tcb_t * to_suspend_task);
 
 /* 将任务插入就绪列表 */
 void mos_task_insert_ready_table_list(mos_list_t *task_list_ready_table, mos_tcb_t *mos_tcb);
 /* 将任务从就绪列表删除 */
 void mos_task_remove_ready_table_list(mos_list_t *task_list_ready_table, mos_tcb_t *mos_tcb);
-
 /* 系统当前时基计数器计数增加 */
 mos_bool_t mos_task_tickcount_increase(void);
 

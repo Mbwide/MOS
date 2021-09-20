@@ -20,7 +20,7 @@
 ;  * @file    mos_port_asm.s
 ;  * @version V1.0.0
 ;  * @date    2021-08-20
-;  * @brief   用户系统软件支持，汇编实现
+;  * @brief   用户系统支持，汇编实现
 ;  ******************************************************************************
 ;  * @note
 ;  *
@@ -35,8 +35,9 @@
 		EXPORT mos_port_task_scheduler
 		EXPORT mos_port_interrupt_disable
 		EXPORT mos_port_interrupt_enable
-
-			
+        EXPORT mos_port_interrupt_disable_from_irq
+		EXPORT mos_port_interrupt_enable_from_irq
+		
         IMPORT g_cur_task_tcb
 		IMPORT mos_task_switch_context
 MOS_NVIC_INT_CTRL            EQU     0xE000ED04
@@ -81,7 +82,6 @@ SVC_Handler		PROC
 	MSR     psp, r0			;将r0的值，即任务的栈指针更新到psp
 	ISB
 	MOV 	r0, #0
-	;MSR		basepri, r0	;设置basepri寄存器的值为0，即所有的中断都没有被屏蔽
 	;MOV 	lr, #0xFFFFFFF9
 	ORR 	lr, #0xd		;当从SVC中断服务退出前,通过向r14寄存器最后4位按位或上0x0D，确保异常返回使用的堆栈指针是PSP，即LR寄存器的位2要为1
                             ;使得硬件在退出时使用进程堆栈指针PSP完成出栈操作并返回后进入线程模式、返回Thumb状态 */
@@ -135,17 +135,27 @@ PendSV_Handler   PROC
 	ENDP
 	
 
-mos_port_interrupt_disable	 PROC
+mos_port_interrupt_disable_from_irq	 PROC
     MRS     R0, PRIMASK
     CPSID   I
     BX      LR
 	ENDP
 
-mos_port_interrupt_enable	 PROC
+mos_port_interrupt_enable_from_irq	 PROC
 	MSR		PRIMASK, r0
 	BX		LR
 	
 	NOP
+	ENDP
+
+mos_port_interrupt_disable	 PROC
+    CPSID   I
+    BX      LR
+    ENDP
+
+mos_port_interrupt_enable	 PROC
+	CPSIE   I
+	BX		LR
 	ENDP
 	
 	END

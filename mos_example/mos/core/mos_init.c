@@ -31,7 +31,7 @@
 #include "mos_init.h"
 #include "mos_task.h"
 #include "mos_port.h"
-
+#include "mos_heap.h"
 
 /* Public Fun-----------------------------------------------------------------*/
 /**
@@ -39,6 +39,9 @@
  */
 void mos_init_core(void)
 {
+	/* 内存池初始化 */
+    mos_heap_init();
+	
     /* 任务调度器初始化 */
     mos_task_scheduler_init();
 
