@@ -39,9 +39,9 @@
  */
 void mos_init_core(void)
 {
-	/* 内存池初始化 */
+    /* 内存池初始化 */
     mos_heap_init();
-	
+
     /* 任务调度器初始化 */
     mos_task_scheduler_init();
 

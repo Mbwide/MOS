@@ -39,13 +39,13 @@
 /* 任务入口函数定义 */
 typedef void (*task_entry_fun)(void);
 
-/* 任务状态 */ 
+/* 任务状态 */
 typedef enum TASK_STATE
 {
-	TASK_RUN = 1, /* 运行态 */
-	TASK_READY,   /* 就绪态 */ 
-	TASK_BLOCK,   /* 阻塞态 */ 
-	TASK_SUSPEND  /* 挂起态 */ 
+    TASK_RUN = 1, /* 运行态 */
+    TASK_READY,   /* 就绪态 */
+    TASK_BLOCK,   /* 阻塞态 */
+    TASK_SUSPEND  /* 挂起态 */
 } TASK_STATE_T;
 
 /* 任务控制块定义 */
@@ -65,19 +65,19 @@ typedef struct mos_task_control_block
 
     mos_uint32_t	task_tick_wake;							/* 任务唤醒时间*/
     mos_uint32_t	task_tick_wake_over;					/* 任务唤醒时间溢出标志位*/
-    mos_list_t 		task_list;								/* 任务所处调度链表*/   
-	mos_list_t 		task_ipc_list;							/* 任务所处任务间通信链表*/
+    mos_list_t 		task_list;								/* 任务所处调度链表*/
+    mos_list_t 		task_ipc_list;							/* 任务所处任务间通信链表*/
 
 } mos_tcb_t;
 
 /* Public Fun-----------------------------------------------------------------*/
-#if MOS_CONFIG_USE_DYNAMIC_HEAP	
+#if MOS_CONFIG_USE_DYNAMIC_HEAP
 /* 动态任务创建 */
 mos_err_t mos_task_create(mos_tcb_t *  const task_tcb,	    /* 任务控制块指针 */
                           task_entry_fun 	 task_code,	    /* 任务入口 */
                           const mos_uint8_t  task_pri,	    /* 任务优先级 */
                           const mos_uint32_t stack_size);   /* 任务栈大小，单位为字 */
-#else 	
+#else
 /* 静态任务创建 */
 mos_err_t mos_task_create(mos_tcb_t *  const task_tcb,	    /* 任务控制块指针 */
                           task_entry_fun 	   task_code,	/* 任务入口 */

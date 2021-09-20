@@ -50,9 +50,9 @@ void task2_entry(void)
     {
         flag2 = 1;
         delay(90000);
-		flag2 = 0;
-		mos_task_suspend(&task2_tcb);
-		flag2 = 1;
+        flag2 = 0;
+        mos_task_suspend(&task2_tcb);
+        flag2 = 1;
         mos_task_delay(1);
     }
 }
@@ -63,10 +63,10 @@ void task3_entry(void)
     for ( ;; )
     {
         flag3 = 1;
-		delay(90000);
-		//mos_task_delay(1);
+        delay(90000);
+        //mos_task_delay(1);
         flag3 = 0;
-		mos_task_suspend(&task3_tcb);
+        mos_task_suspend(&task3_tcb);
         mos_task_delay(1);
     }
 }
@@ -81,7 +81,7 @@ int main()
     mos_port_entry_critical();
     mos_init_core();
 
-    mos_task_create(&task1_tcb,					
+    mos_task_create(&task1_tcb,
                     task1_entry,
                     1UL,
                     512UL);
@@ -95,14 +95,14 @@ int main()
                     task3_entry,
                     3UL,
                     512UL);
-					
+
     mos_task_scheduler_start();
-	
+
     mos_port_exit_critical();
 
     while(1)
     {
-       /* 不会运行到这 */
+        /* 不会运行到这 */
     }
 }
 
