@@ -14,6 +14,7 @@
 #include "mos_init.h"
 #include "mos_task.h"
 #include "mos_port.h"
+#include "mos_ipc.h"
 
 /* 标志位 */
 mos_uint8_t flag1;
@@ -24,6 +25,9 @@ mos_uint8_t flag3;
 mos_tcb_t task1_tcb;
 mos_tcb_t task2_tcb;
 mos_tcb_t task3_tcb;
+
+/* 同步信号量 */
+mos_sync_t sync_1;
 
 /* 软件延时，模拟任务运行 */
 void delay (uint32_t count)
@@ -38,6 +42,8 @@ void task1_entry(void)
     {
         flag1 = 1;
         mos_task_delay(1);
+        //os_task_suspend(&task1_tcb);
+        //mos_ipc_sync_give(&sync_1);
         flag1 = 0;
         mos_task_delay(1);
     }
@@ -46,13 +52,14 @@ void task1_entry(void)
 /* 任务2 */
 void task2_entry(void)
 {
+    mos_err_t sync_data;
+
     for ( ;; )
     {
         flag2 = 1;
-        delay(90000);
+        mos_task_delay(10);
+        //mos_task_resume(&task1_tcb);
         flag2 = 0;
-        mos_task_suspend(&task2_tcb);
-        flag2 = 1;
         mos_task_delay(1);
     }
 }
@@ -63,10 +70,8 @@ void task3_entry(void)
     for ( ;; )
     {
         flag3 = 1;
-        delay(90000);
-        //mos_task_delay(1);
+        mos_task_delay(1);
         flag3 = 0;
-        mos_task_suspend(&task3_tcb);
         mos_task_delay(1);
     }
 }
@@ -81,6 +86,7 @@ int main()
     mos_port_entry_critical();
     mos_init_core();
 
+    mos_ipc_sync_creat(&sync_1);
     mos_task_create(&task1_tcb,
                     task1_entry,
                     1UL,

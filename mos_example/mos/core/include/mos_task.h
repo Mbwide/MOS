@@ -19,12 +19,13 @@
 /**
   ******************************************************************************
   * @file    mos_task.h
-  * @version V1.0.0
-  * @date    2021-08-20
+  * @version V1.0.1
+  * @date    2021-10-04
   * @brief   任务与调度
   ******************************************************************************
   * @note
-  *
+  *          2021-08-20 Mbwide:初始版本
+  *          2021-10-04 Mbwide:结构优化
   ******************************************************************************
   */
 
@@ -51,7 +52,6 @@ typedef enum TASK_STATE
 /* 任务控制块定义 */
 typedef struct mos_task_control_block
 {
-
     volatile void	*stack_pointer;							/* 任务栈指针sp */
     char			task_name[MOS_CONFIG_TASK_NAMELEN];		/* 任务名字 */
     task_entry_fun	task_entry;								/* 任务入口函数 */
@@ -65,9 +65,9 @@ typedef struct mos_task_control_block
 
     mos_uint32_t	task_tick_wake;							/* 任务唤醒时间*/
     mos_uint32_t	task_tick_wake_over;					/* 任务唤醒时间溢出标志位*/
+
     mos_list_t 		task_list;								/* 任务所处调度链表*/
     mos_list_t 		task_ipc_list;							/* 任务所处任务间通信链表*/
-
 } mos_tcb_t;
 
 /* Public Fun-----------------------------------------------------------------*/
@@ -97,22 +97,25 @@ mos_err_t mos_task_scheduler(void);
 /* 任务选择,即更新当前运行任务 */
 void mos_task_switch_context(void);
 
-
-/* 任务延时 */
-void mos_task_delay(const mos_uint32_t tick);
-
-
 /* 将任务挂起 */
 void mos_task_suspend(mos_tcb_t * to_suspend_task);
 /* 将任务恢复 */
 void mos_task_resume(mos_tcb_t * to_suspend_task);
+/* 任务延时 */
+void mos_task_delay(const mos_uint32_t tick);
+/* 获取当前任务控制块 */
+mos_tcb_t * mos_task_get_cur_tcb(void);
 
-/* 将任务插入就绪列表 */
-void mos_task_insert_ready_table_list(mos_list_t *task_list_ready_table, mos_tcb_t *mos_tcb);
-/* 将任务从就绪列表删除 */
+/* 将任务结点插入到挂起列表 */
+void mos_task_insert_suspend_list(mos_tcb_t * to_suspend_task);
+/* 将任务结点插入到就绪列表 */
+void mos_task_insert_ready_table_list(mos_tcb_t *to_ready_task);
+/* 将任务结点从就绪列表删除 */
 void mos_task_remove_ready_table_list(mos_list_t *task_list_ready_table, mos_tcb_t *mos_tcb);
-/* 系统当前时基计数器计数增加 */
-mos_bool_t mos_task_tickcount_increase(void);
+/* 将任务结点插入延时列表 */
+void mos_task_insert_delay_list(mos_list_t *delay_list, mos_list_t *task_node, mos_tick_t mos_task_wake_tick);
+/* 将任务结点从延时列表删除 */
+void mos_task_remove_delay_list(mos_tcb_t * to_remove_delay_tcb);
 
 #endif /* _MOS_TASK_H */
 

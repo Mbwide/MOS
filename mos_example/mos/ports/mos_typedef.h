@@ -48,6 +48,17 @@ typedef unsigned long					mos_ubase_t;
 typedef signed   long					mos_base_t;
 
 
+/* MOS 错误码 */
+#define MOS_EOK        0    /* 没有错误*/
+#define MOS_ERROR      1    /* 有错误 */
+#define MOS_ETIMEOUT   2    /* 超时 */
+#define MOS_EFULL      3    /* 资源满 */
+#define MOS_EEMPTY     4    /* 资源空 */
+#define MOS_ENOMEM     5    /* 内存不足 */
+#define MOS_ENULL      6    /* 非法地址 */
+
+
+/* MDK 编译器 */
 #ifdef __CC_ARM
     #define MOS_INLINE						static __inline
     #define ALIGN(n)                    	__attribute__((aligned(n)))

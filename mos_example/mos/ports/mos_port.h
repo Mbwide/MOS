@@ -35,10 +35,10 @@
 /* define --------------------------------------------------------------------*/
 /* 进入临界区,irq */
 #define mos_port_entry_critical_irq() \
-    mos_port_interrupt_disable_from_irq()
+    mos_port_interrupt_disable_temp()
 /* 退出临界区,irq */
 #define mos_port_exit_critical_irq(x) \
-    mos_port_interrupt_enable_from_irq(x)
+    mos_port_interrupt_enable_temp(x)
 
 /* 进入临界区 */
 #define mos_port_entry_critical() \
@@ -63,10 +63,10 @@ extern void SysTick_Handler(void);
 /* PendSV 中断服务函数 */
 extern void PendSV_Handler(void);
 
-/* 关闭中断,irq */
-mos_base_t mos_port_interrupt_disable_from_irq(void);
-/* 开启中断,irq  */
-void mos_port_interrupt_enable_from_irq(mos_base_t primask_value);
+/* 关闭中断,带标志位 */
+mos_base_t mos_port_interrupt_disable_temp(void);
+/* 开启中断,带标志位 */
+void mos_port_interrupt_enable_temp(mos_base_t primask_value);
 
 /* 关闭中断 */
 void mos_port_interrupt_disable(void);

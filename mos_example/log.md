@@ -13,3 +13,15 @@
 
 1. 加入mos_task_suspend ：任务挂起
 2. 加入mos_task_resume：任务恢复
+
+##### 20211004
+
+1. 加入mos_ipc.c mos_ipc.h ，完成同步信号量，添加以下接口
+
+   - mos_ipc_sync_creat /* 同步信号量创建 */
+   - mos_ipc_sync_take /* 同步信号量获取 */
+   - mos_ipc_sync_give /* 同步信号量施放 */
+
+2. 优化代码结构
+
+   

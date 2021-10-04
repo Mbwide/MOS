@@ -32,6 +32,7 @@
 #include "mos_task.h"
 #include "mos_port.h"
 #include "mos_heap.h"
+#include "mos_tick.h"
 
 /* Public Fun-----------------------------------------------------------------*/
 /**
@@ -46,6 +47,6 @@ void mos_init_core(void)
     mos_task_scheduler_init();
 
     /* SysTick定时器初始化 */
-    mos_port_systick_init();
+    mos_tick_systick_init();
 }
 

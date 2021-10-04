@@ -413,11 +413,6 @@
               <FilePath>..\mos\core\mos_init.c</FilePath>
             </File>
             <File>
-              <FileName>mos_user_config.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\mos\mos_user_config.h</FilePath>
-            </File>
-            <File>
               <FileName>mos_sys.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\mos\core\mos_sys.c</FilePath>
@@ -432,11 +427,21 @@
               <FileType>1</FileType>
               <FilePath>..\mos\core\mos_heap.c</FilePath>
             </File>
+            <File>
+              <FileName>mos_ipc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\mos\core\mos_ipc.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
           <GroupName>mos/ports</GroupName>
           <Files>
+            <File>
+              <FileName>mos_port.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\mos\ports\mos_port.c</FilePath>
+            </File>
             <File>
               <FileName>mos_hw.c</FileName>
               <FileType>1</FileType>
@@ -446,11 +451,6 @@
               <FileName>mos_port_asm.s</FileName>
               <FileType>2</FileType>
               <FilePath>..\mos\ports\mos_port_asm.s</FilePath>
-            </File>
-            <File>
-              <FileName>mos_port.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\mos\ports\mos_port.c</FilePath>
             </File>
           </Files>
         </Group>

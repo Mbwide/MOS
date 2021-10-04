@@ -15,56 +15,55 @@
   * GNU General Public License for more details.
   ******************************************************************************
   */
-
 /**
   ******************************************************************************
-  * @file    mos_hw.h
+  * @file    mos_ipc.h
   * @version V1.0.0
-  * @date    2021-08-20
-  * @brief   用户系统硬件支持
+  * @date    2021-09-15
+  * @brief   任务间通信
   ******************************************************************************
   * @note
   *
   ******************************************************************************
   */
+#ifndef _MOS_IPC_H
+#define _MOS_IPC_H
 
-#ifndef _MOS_HW_H
-#define _MOS_HW_H
 #include "mos_typedef.h"
+#include "mos_list.h"
 
-
-/* 任务上下文 */
-typedef struct task_hw_context
+/* 信号量类型标志 */
+typedef enum ipc_flag
 {
-    /* 手动出入栈寄存器 */
-    mos_uint32_t r4;
-    mos_uint32_t r5;
-    mos_uint32_t r6;
-    mos_uint32_t r7;
-    mos_uint32_t r8;
-    mos_uint32_t r9;
-    mos_uint32_t r10;
-    mos_uint32_t r11;
+	INIT_IPC,
+	SYNC_IPC,
+	COUNT_IPC,
+	MUTEX_IPC,	
+} ipc_flag_e;
 
-    /* 自动出入栈寄存器 */
-    mos_uint32_t r0;
-    mos_uint32_t r1;
-    mos_uint32_t r2;
-    mos_uint32_t r3;
-    mos_uint32_t r12;
-    mos_uint32_t lr;
-    mos_uint32_t pc;
-    mos_uint32_t psr;
+/* 信号量头属性 */
+typedef struct mos_ipc
+{
+    mos_ubase_t flag;
+	mos_list_t block_list;
+} mos_ipc_t;
 
-} task_hw_context_t;
+/* 同步信号量控制块 */
+typedef struct mos_sync
+{
+	mos_ipc_t sync_ipc;
+	mos_ubase_t value;	
+} mos_sync_t;
 
 
 /* Public Fun-----------------------------------------------------------------*/
-void *mos_hw_stack_init(void *tentry,
-                        mos_uint32_t parameter,
-                        mos_uint32_t stack_top);
+/* 同步信号量创建 */
+mos_err_t mos_ipc_sync_creat(mos_sync_t *sync_ipc);
+/* 同步信号量获取 */
+mos_err_t mos_ipc_sync_take(mos_sync_t *sync_ipc, mos_uint32_t to_block_tick);
+/* 同步信号量施放 */
+mos_err_t mos_ipc_sync_give(mos_sync_t *sync_ipc);
 
 
-
-#endif /* _MOS_HW_H */
+#endif /* _MOS_IPC_H */
 

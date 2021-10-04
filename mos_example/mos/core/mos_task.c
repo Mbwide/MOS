@@ -19,12 +19,13 @@
 /**
   ******************************************************************************
   * @file    mos_task.c
-  * @version V1.0.0
-  * @date    2021-08-20
+  * @version V1.0.1
+  * @date    2021-10-04
   * @brief   任务与调度
   ******************************************************************************
   * @note
-  *
+  *          2021-08-20 Mbwide:初始版本
+  *          2021-10-04 Mbwide:结构优化
   ******************************************************************************
   */
 
@@ -32,30 +33,20 @@
 #include "mos_hw.h"
 #include "mos_port.h"
 #include "mos_heap.h"
+#include "mos_tick.h"
 
 /* Private -------------------------------------------------------------------*/
 /* 延时列表，交替使用，用于解决时钟溢出问题 */
 static mos_list_t g_mos_task_delay_list_1;
 static mos_list_t g_mos_task_delay_list_2;
-/* 任务延时列表指针 */
-static mos_list_t * volatile g_mos_task_delay_list;
 /* 任务延时溢出列表指针 */
 static mos_list_t * volatile g_mos_task_delay_overflow_list;
-
-/* 下一个任务解除阻塞时间 */
-static volatile mos_uint32_t g_mos_task_next_task_unblock_tick = 0U;
-/* 系统当前时基计数器 */
-static mos_tick_t g_mos_task_cur_tick_count = 0;
-
 /* 任务悬起列表 */
 //static mos_list_t g_mos_task_pend_list;
-/* 任务挂起列表 */
-static mos_list_t g_mos_task_suspend_list;
-
-/* 任务就绪表 */
-static mos_list_t  g_mos_task_list_ready_table[MOS_CONFIG_TASK_PRIORITY_MAX];
 /* 任务优先级标志*/
 static volatile mos_uint32_t g_mos_task_priority_flag_32bit;
+/* 任务调度开启标志，0为开启 */
+static mos_ubase_t g_scheduler_flag;
 
 #if MOS_CONFIG_USE_DYNAMIC_HEAP
     /* 空闲任务 任务控制块 */
@@ -67,34 +58,18 @@ static volatile mos_uint32_t g_mos_task_priority_flag_32bit;
     static mos_uint8_t mos_task_idle_stack[MOS_CONFIG_TASK_IDLE_STACK_SIZE];
 #endif
 
-/* 任务调度开启标志，0为开启 */
-static mos_ubase_t g_scheduler_flag;
-
-/* 初始化新创建的任务 */
-static void mos_task_init_new(mos_tcb_t *  const mos_new_tcb,   /* 任务控制块指针 */
-                              task_entry_fun 	   task_code,   /* 任务入口 */
-                              //const char * const task_name,   /* 任务名称，字符串形式 */
-                              const mos_uint8_t  task_pri,      /* 任务优先级 */
-                              //const mos_uint32_t parameter,   /* 任务形参 */
-                              const mos_uint32_t stack_size,    /* 任务栈大小，单位为字 */
-                              const mos_uint32_t stack_start);  /* 任务栈开始地址 */
-/* 空闲任务入口函数 */
-static void mos_task_idle_entry(void *p_arg);
-/* 初始化空闲任务 */
-static void mos_task_idle_init(void);
-/* 将任务插入延时列表 */
-static void mos_task_insert_delay_list(mos_list_t *delay_list, mos_list_t *node, mos_tick_t mos_task_wake_tick);
-/* 任务延时处理 */
-static void mos_task_delay_process(mos_tcb_t *mos_tcb, const mos_uint32_t tick);
-/* 系统时基计数器溢出后切换延时列表 */
-static void mos_task_switch_delay_list(void);
-/* 切换延时列表后复位下一个任务阻塞时间 */
-static void mos_task_reset_next_task_unblock_time(void);
-
 
 /* Public --------------------------------------------------------------------*/
 /* 当前正在运行任务的任务控制块 */
 mos_tcb_t * volatile g_cur_task_tcb = NULL;
+/* 任务就绪表 */
+mos_list_t  g_mos_task_list_ready_table[MOS_CONFIG_TASK_PRIORITY_MAX];
+/* 任务挂起列表 */
+mos_list_t g_mos_task_suspend_list;
+/* 任务延时列表指针 */
+mos_list_t * volatile g_mos_task_delay_list;
+/* 下一个任务解除阻塞时间 */
+extern volatile mos_uint32_t g_mos_task_next_task_unblock_tick;
 
 
 /* define --------------------------------------------------------------------*/
@@ -128,6 +103,81 @@ mos_tcb_t * volatile g_cur_task_tcb = NULL;
 
 #endif
 
+/* Private Fun----------------------------------------------------------------*/
+/**
+ * @brief 初始化新创建的任务
+ */
+static void mos_task_init_new(mos_tcb_t *  const mos_new_tcb,  /* 任务控制块指针 */
+                              task_entry_fun 	   task_code,  /* 任务入口 */
+                              //const char * const task_name,  /* 任务名称，字符串形式 */
+                              const mos_uint8_t  task_pri,     /* 任务优先级 */
+                              //const mos_uint32_t parameter,  /* 任务形参 */
+                              const mos_uint32_t stack_size,   /* 任务栈大小，单位为字 */
+                              const mos_uint32_t stack_start)  /* 任务栈起始地址 */
+{
+    //mos_strncpy(mos_new_tcb->task_name, task_name, MOS_CONFIG_TASK_NAMELEN);
+
+    mos_new_tcb->task_entry = task_code;
+    //mos_new_tcb->task_param = parameter;
+
+    mos_new_tcb->stack_top  = stack_start;
+    mos_new_tcb->stack_size = stack_size;
+
+    mos_new_tcb->stack_pointer = mos_hw_stack_init(	task_code,
+                                 0,
+                                 stack_start + stack_size - 4);
+
+    if (task_pri >= MOS_CONFIG_TASK_PRIORITY_MAX)
+    {
+        mos_new_tcb->task_priority = MOS_CONFIG_TASK_PRIORITY_MAX - 1;
+    }
+    else
+    {
+        mos_new_tcb->task_priority = task_pri;
+    }
+
+    mos_new_tcb->task_tick_wake = 0UL;
+    mos_new_tcb->task_state = TASK_READY;
+    /* 任务状态列表 */
+    mos_list_init(&mos_new_tcb->task_list);
+    /* IPC阻塞列表 */
+    mos_list_init(&mos_new_tcb->task_ipc_list);
+}
+
+/**
+ * @brief 空闲任务入口函数
+ */
+static void mos_task_idle_entry(void *p_arg)
+{
+    while (1)
+    {
+
+    }
+}
+
+/**
+ * @brief 初始化空闲任务
+ */
+static void mos_task_idle_init(void)
+{
+#if MOS_CONFIG_USE_DYNAMIC_HEAP
+    /* 动创建idle任务 */
+    mos_task_create(&idle_tcb,
+                    (task_entry_fun)mos_task_idle_entry,
+                    MOS_CONFIG_TASK_PRIORITY_MAX - 1,
+                    MOS_CONFIG_TASK_IDLE_STACK_SIZE);
+#else
+    /* 静态创建idle任务 */
+    mos_task_create(&idle_tcb,
+                    (task_entry_fun)mos_task_idle_entry,
+                    //"idle_task",
+                    MOS_CONFIG_TASK_PRIORITY_MAX - 1,
+                    //(mos_uint32_t)NULL,
+                    MOS_CONFIG_TASK_IDLE_STACK_SIZE,
+                    (mos_uint32_t)mos_task_idle_stack);
+#endif
+}
+
 /* Public Fun-----------------------------------------------------------------*/
 /**
  * @brief  任务创建
@@ -141,7 +191,7 @@ mos_tcb_t * volatile g_cur_task_tcb = NULL;
  *
  * @return 任务创建错误标志
  */
-#if MOS_CONFIG_USE_DYNAMIC_HEAP
+#if (MOS_CONFIG_USE_DYNAMIC_HEAP == YES)
 mos_err_t mos_task_create(	mos_tcb_t *  const task_tcb,	/* 任务控制块指针 */
                             task_entry_fun 	   task_code,	/* 任务入口 */
                             const mos_uint8_t  task_pri,	/* 任务优先级 */
@@ -163,7 +213,7 @@ mos_err_t mos_task_create(	mos_tcb_t *  const task_tcb,	/* 任务控制块指针 */
                             (mos_uint32_t)stack_start);	/* 任务栈起始地址 */
 
         /* 将任务插入就绪列表 */
-        mos_task_insert_ready_table_list(g_mos_task_list_ready_table, mos_new_tcb);
+        mos_task_insert_ready_table_list(mos_new_tcb);
     }
     else
     {
@@ -240,9 +290,6 @@ mos_err_t mos_task_scheduler_init(void)
     g_mos_task_delay_overflow_list = &g_mos_task_delay_list_2;
     mos_list_init(g_mos_task_delay_overflow_list);
 
-    /* 下一个任务解除阻塞时间初始化为最大延时时间 */
-    g_mos_task_next_task_unblock_tick = MOS_MAX_DELAY;
-
     return 0;
 }
 
@@ -286,6 +333,53 @@ void mos_task_switch_context(void)
 }
 
 /**
+ * @brief 挂起任务
+ */
+void mos_task_suspend(mos_tcb_t * to_suspend_task)
+{
+    mos_base_t temp;
+
+    /* 进入临界区 */
+    temp = mos_port_entry_critical_irq();
+
+    /* 如果要挂起的任务是运行态 */
+    if (to_suspend_task->task_state == TASK_RUN)
+    {
+        mos_task_insert_suspend_list(to_suspend_task);
+        mos_port_task_scheduler();
+    }
+    /* 如果要挂起的任务是其他状态 */
+    else
+	{
+		 mos_task_insert_suspend_list(to_suspend_task);
+	}
+
+    /* 退出临界区 */
+    mos_port_exit_critical_irq(temp);
+}
+
+/**
+ * @brief 恢复任务
+ */
+void mos_task_resume(mos_tcb_t * to_resume_task)
+{
+    mos_base_t temp;
+
+    /* 进入临界区 */
+    temp = mos_port_entry_critical_irq();
+
+    mos_list_node_delete(&(to_resume_task->task_list));
+    mos_task_insert_ready_table_list( to_resume_task);
+
+    /* 退出临界区 */
+    mos_port_exit_critical_irq(temp);
+
+    /* 任务调度 */
+    mos_task_scheduler();
+
+}
+
+/**
  * @brief 任务延时
  */
 void mos_task_delay(const mos_uint32_t tick)
@@ -294,7 +388,7 @@ void mos_task_delay(const mos_uint32_t tick)
     mos_port_entry_critical();
 
     /* 将任务插入到延时列表 */
-    mos_task_delay_process(g_cur_task_tcb, tick);
+    mos_tick_delay_process(g_cur_task_tcb, tick);
 
     /* 使能中断 */
     mos_port_exit_critical();
@@ -304,20 +398,78 @@ void mos_task_delay(const mos_uint32_t tick)
 }
 
 /**
- * @brief 将任务插入就绪列表
+ * @brief  获取当前任务控制块
+ *
+ * @return 当前任务控制块
  */
-void mos_task_insert_ready_table_list(mos_list_t *task_list_ready_table, mos_tcb_t *mos_tcb)
+mos_tcb_t * mos_task_get_cur_tcb(void)
 {
-    /* 修改任务状态为就绪态 */
-    mos_tcb->task_state = TASK_READY;
-    /* 将任务插入就绪列表 */
-    mos_list_head_insert(&(task_list_ready_table[mos_tcb->task_priority]), &(mos_tcb->task_list));
-    /* 设置对应位优先级标志 */
-    g_mos_task_priority_flag_32bit |= (1UL << (31UL - mos_tcb->task_priority));
+    return g_cur_task_tcb;
 }
 
 /**
- * @brief 将任务从就绪列表删除
+ * @brief 将任务结点插入到挂起列表
+ */
+void mos_task_insert_suspend_list(mos_tcb_t * to_suspend_task)
+{
+	/* 如果要挂起的任务是运行态 */
+    if (to_suspend_task->task_state == TASK_RUN)
+    {
+        mos_task_remove_ready_table_list(g_mos_task_list_ready_table, to_suspend_task);
+        to_suspend_task->task_state = TASK_SUSPEND;
+        mos_list_head_insert(&g_mos_task_suspend_list, &to_suspend_task->task_list);
+    }
+    /* 如果要挂起的任务是就绪态 */
+    else if (to_suspend_task->task_state == TASK_READY)
+    {
+        mos_task_remove_ready_table_list(g_mos_task_list_ready_table, to_suspend_task);
+        to_suspend_task->task_state = TASK_SUSPEND;
+        mos_list_head_insert(&g_mos_task_suspend_list, &to_suspend_task->task_list);
+    }
+    /* 如果要挂起的任务是阻塞态 */
+    else if (to_suspend_task->task_state == TASK_BLOCK)
+    {
+        /* 将任务从阻塞列表中移除 */
+        mos_list_node_delete(&(to_suspend_task->task_list));
+        to_suspend_task->task_state = TASK_SUSPEND;
+        mos_list_head_insert(&g_mos_task_suspend_list, &to_suspend_task->task_list);
+    }
+}
+
+/**
+ * @brief 将任务结点插入到就绪列表
+ */
+void mos_task_insert_ready_table_list(mos_tcb_t *to_ready_task)
+{
+	/* 挂起态 */
+    if(to_ready_task->task_state == TASK_SUSPEND)
+    {
+        mos_list_node_delete(&(to_ready_task->task_list));
+    }
+    /* 阻塞态 */
+    else if (to_ready_task->task_state == TASK_BLOCK)
+    {
+        mos_task_remove_delay_list(to_ready_task);
+    }
+	
+#if (MOS_CONFIG_USE_IPC == YES)
+    if (!mos_list_is_empty(&to_ready_task->task_ipc_list))
+    {
+        mos_list_node_delete(&to_ready_task->task_ipc_list);
+    }
+#endif
+	
+    /* 修改任务状态为就绪态 */
+    to_ready_task->task_state = TASK_READY;
+    /* 将任务插入就绪列表 */
+    mos_list_head_insert(&(g_mos_task_list_ready_table[to_ready_task->task_priority]), &(to_ready_task->task_list));
+    /* 设置对应位优先级标志 */
+    g_mos_task_priority_flag_32bit |= (1UL << (31UL - to_ready_task->task_priority));
+}
+
+
+/**
+ * @brief 将任务结点从就绪列表删除
  */
 void mos_task_remove_ready_table_list(mos_list_t *task_list_ready_table, mos_tcb_t *mos_tcb)
 {
@@ -335,79 +487,63 @@ void mos_task_remove_ready_table_list(mos_list_t *task_list_ready_table, mos_tcb
 #else
     g_mos_task_priority_flag_32bit &= ~(1UL << (31UL - mos_tcb->task_priority));
 #endif
-
 }
 
 /**
- * @brief  系统当前时基计数器计数增加
- *
- * @return 是否执行任务调度函数
+ * @brief  将任务结点插入延时列表
+ * @param  任务延时列表
+ * @param  任务自身链表
+ * @param  系统唤醒该任务时间
  */
-mos_bool_t mos_task_tickcount_increase(void)
+void mos_task_insert_delay_list(mos_list_t *delay_list, mos_list_t *task_node, mos_tick_t mos_task_wake_tick)
 {
-    mos_tcb_t *mos_tcb;
-    g_mos_task_cur_tick_count++;
+    mos_list_t *iterator;
+    mos_tcb_t  *mos_delay_tcb;
+    iterator = delay_list;
 
-    /*是否调度*/
-    mos_bool_t switch_flag = FALSE;
-
-    /* 如果g_mos_task_cur_tick_count溢出，则切换延时列表 */
-    if (g_mos_task_cur_tick_count == (mos_tick_t)0U)
+    /* 按照唤醒时间task_tick_wake从小到大找到task_node插入点 */
+    while (iterator->next != delay_list)
     {
-        mos_task_switch_delay_list();
-    }
+        mos_delay_tcb = MOS_LIST_ENTRY(iterator->next, mos_tcb_t, task_list);
 
-    if (g_mos_task_cur_tick_count >= g_mos_task_next_task_unblock_tick)
-    {
-        for ( ;; )
+        if (mos_delay_tcb->task_tick_wake > mos_task_wake_tick)
         {
-            /* 延时列表为空，设置g_mos_task_next_task_unblock_tick为可能的最大值 */
-            if(mos_list_is_empty(g_mos_task_delay_list))
-            {
-                g_mos_task_next_task_unblock_tick = MOS_MAX_DELAY;
-                break;
-            }
-            /* 延时列表不为空 */
-            else
-            {
-                mos_tcb = MOS_LIST_ENTRY(g_mos_task_delay_list->next, mos_tcb_t, task_list);
-
-                /* 直到将延时列表中所有延时到期的任务移除才跳出for循环 */
-                if(g_mos_task_cur_tick_count < mos_tcb->task_tick_wake)
-                {
-                    g_mos_task_next_task_unblock_tick = mos_tcb-> task_tick_wake;
-                    break;
-                }
-
-                /* 将任务从延时列表移除，消除等待状态 */
-                mos_list_node_delete(&mos_tcb->task_list);
-                /* 重置任务控制块的task_tick_wake */
-                mos_tcb->task_tick_wake = 0L;
-
-                /* 有更高优先级任务，需要任务切换，数值越大，优先级越低 */
-                if (g_cur_task_tcb->task_priority > mos_tcb->task_priority)
-                {
-                    /* 系统调度标志 */
-                    switch_flag = TRUE;
-                }
-
-                /* 将解除等待的任务添加到就绪列表 */
-                mos_task_insert_ready_table_list(g_mos_task_list_ready_table, mos_tcb);
-            }
+            break;
         }
+
+        iterator = iterator->next;
     }
 
-    /* 使用时间片，每次都要执行调度程序 */
-#if (MOS_CONFIG_USE_TIME_SLICING == YES)
-    {
-        /* 系统调度标志 */
-        switch_flag = TRUE;
-    }
-#endif
-
-    return switch_flag;
+    /* 插入列表 */
+    mos_list_head_insert(iterator, task_node);
 }
 
+/**
+ * @brief  将任务结点从延时列表删除
+ * @param  任务延时列表
+ * @param  任务自身链表
+ */
+void mos_task_remove_delay_list(mos_tcb_t * to_remove_delay_tcb)
+{
+	 mos_tcb_t * delay_next_task_tcb = NULL;
+     
+	 /* 将任务从延时列表移除，消除等待状态 */
+     mos_list_node_delete(&to_remove_delay_tcb->task_list);
+     /* 重置任务控制块的task_tick_wake */
+     to_remove_delay_tcb->task_tick_wake = 0L;
+
+     /* 延时列表为空，设置g_mos_task_next_task_unblock_tick为可能的最大值 */
+     if(mos_list_is_empty(g_mos_task_delay_list))
+     {
+         g_mos_task_next_task_unblock_tick = MOS_MAX_DELAY;
+     }
+     /* 延时列表不为空 */
+     else
+     {
+         delay_next_task_tcb = MOS_LIST_ENTRY(g_mos_task_delay_list->next, mos_tcb_t, task_list);
+         g_mos_task_next_task_unblock_tick = delay_next_task_tcb->task_tick_wake;
+     }
+}
 
 /**
  * @brief 关闭任务调度
@@ -454,238 +590,3 @@ void mos_task_scheduler_resume(void)
     mos_port_exit_critical_irq(temp);
 }
 
-/**
- * @brief 挂起任务
- */
-void mos_task_suspend(mos_tcb_t * to_suspend_task)
-{
-    mos_base_t temp;
-
-    /* 进入临界区 */
-    temp = mos_port_entry_critical_irq();
-
-    /* 如果要挂起的任务是运行态 */
-    if (to_suspend_task->task_state == TASK_RUN)
-    {
-        mos_task_remove_ready_table_list(g_mos_task_list_ready_table, to_suspend_task);
-        to_suspend_task->task_state = TASK_SUSPEND;
-        mos_list_head_insert(&g_mos_task_suspend_list, &to_suspend_task->task_list);
-        mos_port_task_scheduler();
-    }
-    /* 如果要挂起的任务是就绪态 */
-    else if (to_suspend_task->task_state == TASK_READY)
-    {
-        mos_task_remove_ready_table_list(g_mos_task_list_ready_table, to_suspend_task);
-        to_suspend_task->task_state = TASK_SUSPEND;
-        mos_list_head_insert(&g_mos_task_suspend_list, &to_suspend_task->task_list);
-    }
-    /* 如果要挂起的任务是阻塞态 */
-    else if (to_suspend_task->task_state == TASK_BLOCK)
-    {
-        /* 将任务从阻塞列表中移除 */
-        mos_list_node_delete(&(to_suspend_task->task_list));
-        to_suspend_task->task_state = TASK_SUSPEND;
-        mos_list_head_insert(&g_mos_task_suspend_list, &to_suspend_task->task_list);
-    }
-
-    /* 退出临界区 */
-    mos_port_exit_critical_irq(temp);
-}
-
-/**
- * @brief 恢复任务
- */
-void mos_task_resume(mos_tcb_t * to_resume_task)
-{
-    mos_base_t temp;
-
-    /* 进入临界区 */
-    temp = mos_port_entry_critical_irq();
-
-    mos_list_node_delete(&(to_resume_task->task_list));
-    mos_task_insert_ready_table_list(g_mos_task_list_ready_table, to_resume_task);
-
-    mos_port_task_scheduler();
-
-    /* 退出临界区 */
-    mos_port_exit_critical_irq(temp);
-}
-
-/* Private Fun----------------------------------------------------------------*/
-/**
- * @brief 初始化新创建的任务
- */
-static void mos_task_init_new(mos_tcb_t *  const mos_new_tcb,  /* 任务控制块指针 */
-                              task_entry_fun 	   task_code,  /* 任务入口 */
-                              //const char * const task_name,    /* 任务名称，字符串形式 */
-                              const mos_uint8_t  task_pri,     /* 任务优先级 */
-                              //const mos_uint32_t parameter,	   /* 任务形参 */
-                              const mos_uint32_t stack_size,   /* 任务栈大小，单位为字 */
-                              const mos_uint32_t stack_start)  /* 任务栈起始地址 */
-{
-    //mos_strncpy(mos_new_tcb->task_name, task_name, MOS_CONFIG_TASK_NAMELEN);
-
-    mos_new_tcb->task_entry = task_code;
-    //mos_new_tcb->task_param = parameter;
-
-    mos_new_tcb->stack_top  = stack_start;
-    mos_new_tcb->stack_size = stack_size;
-
-    mos_new_tcb->stack_pointer = mos_hw_stack_init(	task_code,
-                                 0,
-                                 stack_start + stack_size - 4);
-
-    if (task_pri >= MOS_CONFIG_TASK_PRIORITY_MAX)
-    {
-        mos_new_tcb->task_priority = MOS_CONFIG_TASK_PRIORITY_MAX - 1;
-    }
-    else
-    {
-        mos_new_tcb->task_priority = task_pri;
-    }
-
-    mos_new_tcb->task_tick_wake = 0UL;
-    mos_new_tcb->task_state = TASK_READY;
-    mos_list_init(&mos_new_tcb->task_list);
-}
-
-/**
- * @brief 空闲任务入口函数
- */
-static void mos_task_idle_entry(void *p_arg)
-{
-    while (1)
-    {
-
-    }
-}
-
-/**
- * @brief 初始化空闲任务
- */
-static void mos_task_idle_init(void)
-{
-#if MOS_CONFIG_USE_DYNAMIC_HEAP
-    /* 动创建idle任务 */
-    mos_task_create(&idle_tcb,
-                    (task_entry_fun)mos_task_idle_entry,
-                    MOS_CONFIG_TASK_PRIORITY_MAX - 1,
-                    MOS_CONFIG_TASK_IDLE_STACK_SIZE);
-#else
-    /* 静态创建idle任务 */
-    mos_task_create(&idle_tcb,
-                    (task_entry_fun)mos_task_idle_entry,
-                    //"idle_task",
-                    MOS_CONFIG_TASK_PRIORITY_MAX - 1,
-                    //(mos_uint32_t)NULL,
-                    MOS_CONFIG_TASK_IDLE_STACK_SIZE,
-                    (mos_uint32_t)mos_task_idle_stack);
-#endif
-}
-
-/**
- * @brief  将任务插入延时列表
- * @param  任务延时列表
- * @param  任务自身链表
- * @param  系统唤醒该任务时间
- */
-static void mos_task_insert_delay_list(mos_list_t *delay_list, mos_list_t *task_node, mos_tick_t mos_task_wake_tick)
-{
-    mos_list_t *iterator;
-    mos_tcb_t  *mos_delay_tcb;
-    iterator = delay_list;
-
-    /* 按照唤醒时间task_tick_wake从小到大找到task_node插入点 */
-    while (iterator->next != delay_list)
-    {
-        mos_delay_tcb = MOS_LIST_ENTRY(iterator->next, mos_tcb_t, task_list);
-
-        if (mos_delay_tcb->task_tick_wake > mos_task_wake_tick)
-        {
-            break;
-        }
-
-        iterator = iterator->next;
-    }
-
-    /* 将任务插入延时列表 */
-    mos_list_head_insert(iterator, task_node);
-}
-
-/**
- * @brief 任务延时处理
- */
-static void mos_task_delay_process(mos_tcb_t *mos_tcb, const mos_uint32_t tick)
-{
-    mos_tick_t mos_task_wake_tick;
-
-    /* 获取系统时基计数器g_mos_tick_cur_tick_count的值 */
-    const mos_tick_t mos_cur_tick_count = g_mos_task_cur_tick_count;
-
-    /* 将任务从就绪列表中移除 */
-    mos_task_remove_ready_table_list(g_mos_task_list_ready_table, g_cur_task_tcb);
-
-    /* 计算延时到期时，系统时基计数器mos_cur_tick_count的值是多少 */
-    mos_task_wake_tick = mos_cur_tick_count + tick;
-
-    /* 修改任务列表唤醒时间 */
-    mos_tcb->task_tick_wake = mos_task_wake_tick;
-
-    /* 修改任务状态为阻塞态 */
-    mos_tcb->task_state = TASK_BLOCK;
-
-    /* 溢出 */
-    if (mos_task_wake_tick < mos_cur_tick_count )
-    {
-        mos_task_insert_delay_list(g_mos_task_delay_overflow_list, &(g_cur_task_tcb->task_list), mos_task_wake_tick);
-    }
-    /* 没有溢出 */
-    else
-    {
-        mos_task_insert_delay_list(g_mos_task_delay_list, &(g_cur_task_tcb->task_list), mos_task_wake_tick);
-
-        /* 更新下一个任务解锁时刻变量g_mos_task_next_task_unblock_tick的值 */
-        if (mos_task_wake_tick < g_mos_task_next_task_unblock_tick)
-        {
-            g_mos_task_next_task_unblock_tick = mos_task_wake_tick;
-        }
-    }
-}
-
-/**
- * @brief 系统时基计数器溢出切换延时列表
- */
-static void mos_task_switch_delay_list(void)
-{
-    /* 交换任务延时列表指针和任务延时溢出列表指针 */
-    mos_list_t *list_temp;
-    list_temp = g_mos_task_delay_list;
-    g_mos_task_delay_list = g_mos_task_delay_overflow_list;
-    g_mos_task_delay_overflow_list = list_temp;
-
-    /* 任务溢出次数计数 */
-    /* g_num_of_over_flow++; */
-
-    /* 切换延时列表后复位下一个任务阻塞时间 */
-    mos_task_reset_next_task_unblock_time();
-}
-
-/**
- * @brief 切换延时列表后复位下一个任务阻塞时间
- */
-static void mos_task_reset_next_task_unblock_time(void)
-{
-    mos_tcb_t *mos_tcb;
-
-    /* 新延时列表为空时设置阻塞时间为最大值 */
-    if (mos_list_is_empty(g_mos_task_delay_list))
-    {
-        g_mos_task_next_task_unblock_tick = MOS_MAX_DELAY;
-    }
-    /* 新延时列表不为空时获取下一个任务阻塞时间*/
-    else
-    {
-        mos_tcb = MOS_LIST_ENTRY(g_mos_task_delay_list->next, mos_tcb_t, task_list);
-        g_mos_task_next_task_unblock_tick = mos_tcb->task_tick_wake;
-    }
-}
