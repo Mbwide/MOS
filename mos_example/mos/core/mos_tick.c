@@ -144,6 +144,7 @@ static mos_bool_t mos_tick_tickcount_increase(void)
                 {
                     mos_list_node_delete(&mos_tcb->task_ipc_list);
                 }
+
 #endif
 
                 /* 有更高优先级任务，需要任务切换，数值越大，优先级越低 */
@@ -221,7 +222,7 @@ void mos_tick_delay_process(mos_tcb_t *mos_tcb, const mos_uint32_t tick)
     mos_tick_t mos_cur_tick_count = mos_tick_get_cur_tick_count();
 
     /* 将任务从就绪列表中移除 */
-    mos_task_remove_ready_table_list(g_mos_task_list_ready_table, g_cur_task_tcb);
+    mos_task_remove_ready_table_list(g_cur_task_tcb);
 
     /* 计算延时到期时，系统时基计数器mos_cur_tick_count的值是多少 */
     mos_task_wake_tick = mos_cur_tick_count + tick;

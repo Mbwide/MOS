@@ -34,8 +34,12 @@
 
 
 /* Public Fun-----------------------------------------------------------------*/
+/* 中断服务函数进入时会调用该函数，中断嵌套计数加 */
 void mos_sys_interrupt_enter(void);
+/* 中断服务函数退出时会调用该函数，中断嵌套计数减 */
 void mos_sys_interrupt_leave(void);
+/* 获取中断嵌套计数 */
+mos_uint8_t mos_sys_get_interrupt_nest_count(void);
+
 
 #endif /* _MOS_SYS_H */
-

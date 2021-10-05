@@ -52,31 +52,32 @@ typedef enum TASK_STATE
 /* 任务控制块定义 */
 typedef struct mos_task_control_block
 {
-    volatile void	*stack_pointer;							/* 任务栈指针sp */
-    char			task_name[MOS_CONFIG_TASK_NAMELEN];		/* 任务名字 */
-    task_entry_fun	task_entry;								/* 任务入口函数 */
-    mos_uint32_t	task_param;								/* 任务形参 */
+    volatile void	*stack_pointer;                       /* 任务栈指针sp */
+    char            task_name[MOS_CONFIG_TASK_NAMELEN];   /* 任务名字 */
+    task_entry_fun	task_entry;                           /* 任务入口函数 */
+    mos_uint32_t	task_param;                           /* 任务形参 */
 
-    mos_uint32_t	stack_top;								/* 任务栈顶地址,低地址 */
-    mos_uint32_t	stack_size;								/* 任务栈大小 */
+    mos_uint32_t	stack_top;                            /* 任务栈顶地址,低地址 */
+    mos_uint32_t	stack_size;                           /* 任务栈大小 */
 
-    mos_uint16_t	task_priority;							/* 任务优先级 */
-    mos_uint16_t	task_state;								/* 任务状态*/
+    mos_uint16_t	task_priority;                        /* 任务优先级 */
+    mos_uint16_t	task_base_priority;                   /* 任务基优先级 */
+	mos_uint16_t	task_state;                           /* 任务状态*/
 
-    mos_uint32_t	task_tick_wake;							/* 任务唤醒时间*/
-    mos_uint32_t	task_tick_wake_over;					/* 任务唤醒时间溢出标志位*/
+    mos_uint32_t	task_tick_wake;                       /* 任务唤醒时间*/
+    mos_uint32_t	task_tick_wake_over;                  /* 任务唤醒时间溢出标志位*/
 
-    mos_list_t 		task_list;								/* 任务所处调度链表*/
-    mos_list_t 		task_ipc_list;							/* 任务所处任务间通信链表*/
+    mos_list_t 		task_list;                            /* 任务所处调度链表*/
+    mos_list_t 		task_ipc_list;                        /* 任务所处任务间通信链表*/
 } mos_tcb_t;
 
 /* Public Fun-----------------------------------------------------------------*/
 #if MOS_CONFIG_USE_DYNAMIC_HEAP
 /* 动态任务创建 */
-mos_err_t mos_task_create(mos_tcb_t *  const task_tcb,	    /* 任务控制块指针 */
-                          task_entry_fun 	 task_code,	    /* 任务入口 */
-                          const mos_uint8_t  task_pri,	    /* 任务优先级 */
-                          const mos_uint32_t stack_size);   /* 任务栈大小，单位为字 */
+mos_err_t mos_task_create(mos_tcb_t *  const task_tcb,     /* 任务控制块指针 */
+                          task_entry_fun     task_code,    /* 任务入口 */
+                          const mos_uint8_t  task_pri,     /* 任务优先级 */
+                          const mos_uint32_t stack_size);  /* 任务栈大小，单位为字 */
 #else
 /* 静态任务创建 */
 mos_err_t mos_task_create(mos_tcb_t *  const task_tcb,	    /* 任务控制块指针 */
@@ -111,7 +112,7 @@ void mos_task_insert_suspend_list(mos_tcb_t * to_suspend_task);
 /* 将任务结点插入到就绪列表 */
 void mos_task_insert_ready_table_list(mos_tcb_t *to_ready_task);
 /* 将任务结点从就绪列表删除 */
-void mos_task_remove_ready_table_list(mos_list_t *task_list_ready_table, mos_tcb_t *mos_tcb);
+void mos_task_remove_ready_table_list(mos_tcb_t *mos_tcb);
 /* 将任务结点插入延时列表 */
 void mos_task_insert_delay_list(mos_list_t *delay_list, mos_list_t *task_node, mos_tick_t mos_task_wake_tick);
 /* 将任务结点从延时列表删除 */

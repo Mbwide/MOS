@@ -75,19 +75,19 @@ mos_port_start_first_task  PROC
 SVC_Handler    PROC
     LDR    r3, =g_cur_task_tcb
 	
-	LDR    r1, [r3]                                 
+    LDR    r1, [r3]                                 
     LDR    r0, [r1]        ;此时r0的值为堆栈指针                       
 
     LDMFD  r0!, {r4 - r11} ;将线程栈指针r1(操作之前先递减)指向的内容加载到CPU寄存器r4~r11
-	MSR    psp, r0         ;将r0的值，即任务的栈指针更新到psp
-	ISB
-	MOV    r0, #0
-	;MOV   lr, #0xFFFFFFF9
-	ORR    lr, #0xd        ;当从SVC中断服务退出前,通过向r14寄存器最后4位按位或上0x0D，确保异常返回使用的堆栈指针是PSP，即LR寄存器的位2要为1
+    MSR    psp, r0         ;将r0的值，即任务的栈指针更新到psp
+    ISB
+    MOV    r0, #0
+    ;MOV   lr, #0xFFFFFFF9
+    ORR    lr, #0xd        ;当从SVC中断服务退出前,通过向r14寄存器最后4位按位或上0x0D，确保异常返回使用的堆栈指针是PSP，即LR寄存器的位2要为1
                            ;使得硬件在退出时使用进程堆栈指针PSP完成出栈操作并返回后进入线程模式、返回Thumb状态 */
-	BX     lr 
+    BX     lr 
 	
-	ENDP
+    ENDP
 		
 mos_port_task_scheduler    PROC
     LDR    R0, =MOS_NVIC_INT_CTRL
@@ -122,7 +122,7 @@ PendSV_Handler    PROC
     LDMIA  sp!, {r1, r3, r14}  ;恢复r1,r3和r14
     LDR    r2,  [r3]
     LDR    r0,  [r2]           ;当前激活的任务TCB第一项保存了任务堆栈的栈顶,现在栈顶值存入R0
-	LDMIA  r0!, {r4-r11}       ;出栈 
+    LDMIA  r0!, {r4-r11}       ;出栈 
     MSR    psp, r0
     ISB
 	

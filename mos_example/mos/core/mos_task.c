@@ -130,10 +130,12 @@ static void mos_task_init_new(mos_tcb_t *  const mos_new_tcb,  /* 任务控制块指针
     if (task_pri >= MOS_CONFIG_TASK_PRIORITY_MAX)
     {
         mos_new_tcb->task_priority = MOS_CONFIG_TASK_PRIORITY_MAX - 1;
+        mos_new_tcb->task_base_priority = MOS_CONFIG_TASK_PRIORITY_MAX - 1;
     }
     else
     {
         mos_new_tcb->task_priority = task_pri;
+        mos_new_tcb->task_base_priority = task_pri;
     }
 
     mos_new_tcb->task_tick_wake = 0UL;
@@ -192,10 +194,10 @@ static void mos_task_idle_init(void)
  * @return 任务创建错误标志
  */
 #if (MOS_CONFIG_USE_DYNAMIC_HEAP == YES)
-mos_err_t mos_task_create(	mos_tcb_t *  const task_tcb,	/* 任务控制块指针 */
-                            task_entry_fun 	   task_code,	/* 任务入口 */
-                            const mos_uint8_t  task_pri,	/* 任务优先级 */
-                            const mos_uint32_t stack_size)  /* 任务栈大小，单位为字 */
+mos_err_t mos_task_create( mos_tcb_t *  const task_tcb,   /* 任务控制块指针 */
+                           task_entry_fun 	   task_code, /* 任务入口 */
+                           const mos_uint8_t  task_pri,   /* 任务优先级 */
+                           const mos_uint32_t stack_size) /* 任务栈大小，单位为字 */
 {
     mos_tcb_t *mos_new_tcb;
     mos_err_t ret = 0;
@@ -206,11 +208,11 @@ mos_err_t mos_task_create(	mos_tcb_t *  const task_tcb,	/* 任务控制块指针 */
     {
         mos_new_tcb = task_tcb;
         /* 创建新的任务 */
-        mos_task_init_new(	mos_new_tcb,	/* 任务控制块指针 */
-                            task_code,		/* 任务入口 */
-                            task_pri,		/* 任务优先级 */
-                            stack_size,		/* 任务栈大小，单位为字 */
-                            (mos_uint32_t)stack_start);	/* 任务栈起始地址 */
+        mos_task_init_new( mos_new_tcb, /* 任务控制块指针 */
+                           task_code,   /* 任务入口 */
+                           task_pri,    /* 任务优先级 */
+                           stack_size,  /* 任务栈大小，单位为字 */
+                           (mos_uint32_t)stack_start);	/* 任务栈起始地址 */
 
         /* 将任务插入就绪列表 */
         mos_task_insert_ready_table_list(mos_new_tcb);
@@ -225,13 +227,13 @@ mos_err_t mos_task_create(	mos_tcb_t *  const task_tcb,	/* 任务控制块指针 */
 }
 
 #else
-mos_err_t mos_task_create(	mos_tcb_t *  const task_tcb,	/* 任务控制块指针 */
-                            task_entry_fun 	   task_code,	/* 任务入口 */
-                            //const char * const task_name,	/* 任务名称，字符串形式 */
-                            const mos_uint8_t  task_pri,	/* 任务优先级 */
-                            //const mos_uint32_t parameter,	/* 任务形参 */
-                            const mos_uint32_t stack_size,	/* 任务栈大小，单位为字 */
-                            const mos_uint32_t stack_start)	/* 任务栈起始地址 */
+mos_err_t mos_task_create( mos_tcb_t *  const task_tcb,    /* 任务控制块指针 */
+                           task_entry_fun 	   task_code,  /* 任务入口 */
+                           //const char * const task_name, /* 任务名称，字符串形式 */
+                           const mos_uint8_t  task_pri,    /* 任务优先级 */
+                           //const mos_uint32_t parameter, /* 任务形参 */
+                           const mos_uint32_t stack_size,  /* 任务栈大小，单位为字 */
+                           const mos_uint32_t stack_start) /* 任务栈起始地址 */
 {
     mos_tcb_t *mos_new_tcb;
     mos_err_t ret = 0;
@@ -240,13 +242,13 @@ mos_err_t mos_task_create(	mos_tcb_t *  const task_tcb,	/* 任务控制块指针 */
     {
         mos_new_tcb = task_tcb;
         /* 创建新的任务 */
-        mos_task_init_new(	mos_new_tcb,	/* 任务控制块指针 */
-                            task_code,		/* 任务入口 */
-                            //task_name,	/* 任务名称，字符串形式 */
-                            task_pri,		/* 任务优先级 */
-                            //parameter,	/* 任务形参 */
-                            stack_size,		/* 任务栈大小，单位为字 */
-                            stack_start);	/* 任务栈起始地址 */
+        mos_task_init_new( mos_new_tcb,  /* 任务控制块指针 */
+                           task_code,    /* 任务入口 */
+                           //task_name,  /* 任务名称，字符串形式 */
+                           task_pri,     /* 任务优先级 */
+                           //parameter,  /* 任务形参 */
+                           stack_size,   /* 任务栈大小，单位为字 */
+                           stack_start); /* 任务栈起始地址 */
 
         /* 将任务插入就绪列表 */
         mos_task_insert_ready_table_list(g_mos_task_list_ready_table, mos_new_tcb);
@@ -350,9 +352,9 @@ void mos_task_suspend(mos_tcb_t * to_suspend_task)
     }
     /* 如果要挂起的任务是其他状态 */
     else
-	{
-		 mos_task_insert_suspend_list(to_suspend_task);
-	}
+    {
+        mos_task_insert_suspend_list(to_suspend_task);
+    }
 
     /* 退出临界区 */
     mos_port_exit_critical_irq(temp);
@@ -412,28 +414,38 @@ mos_tcb_t * mos_task_get_cur_tcb(void)
  */
 void mos_task_insert_suspend_list(mos_tcb_t * to_suspend_task)
 {
-	/* 如果要挂起的任务是运行态 */
+    /* 如果要挂起的任务是运行态 */
     if (to_suspend_task->task_state == TASK_RUN)
     {
-        mos_task_remove_ready_table_list(g_mos_task_list_ready_table, to_suspend_task);
+        mos_task_remove_ready_table_list(to_suspend_task);
         to_suspend_task->task_state = TASK_SUSPEND;
         mos_list_head_insert(&g_mos_task_suspend_list, &to_suspend_task->task_list);
     }
     /* 如果要挂起的任务是就绪态 */
     else if (to_suspend_task->task_state == TASK_READY)
     {
-        mos_task_remove_ready_table_list(g_mos_task_list_ready_table, to_suspend_task);
+        mos_task_remove_ready_table_list(to_suspend_task);
         to_suspend_task->task_state = TASK_SUSPEND;
         mos_list_head_insert(&g_mos_task_suspend_list, &to_suspend_task->task_list);
     }
     /* 如果要挂起的任务是阻塞态 */
     else if (to_suspend_task->task_state == TASK_BLOCK)
     {
-        /* 将任务从阻塞列表中移除 */
-        mos_list_node_delete(&(to_suspend_task->task_list));
+        /* 将任务从阻塞（延时）列表中移除 */
+        mos_task_remove_delay_list(to_suspend_task);
         to_suspend_task->task_state = TASK_SUSPEND;
         mos_list_head_insert(&g_mos_task_suspend_list, &to_suspend_task->task_list);
     }
+
+#if (MOS_CONFIG_USE_IPC == YES)
+
+    /* 删除任务信号量阻塞结点 */
+    if (!mos_list_is_empty(&to_suspend_task->task_ipc_list))
+    {
+        mos_list_node_delete(&to_suspend_task->task_ipc_list);
+    }
+
+#endif
 }
 
 /**
@@ -441,7 +453,7 @@ void mos_task_insert_suspend_list(mos_tcb_t * to_suspend_task)
  */
 void mos_task_insert_ready_table_list(mos_tcb_t *to_ready_task)
 {
-	/* 挂起态 */
+    /* 挂起态 */
     if(to_ready_task->task_state == TASK_SUSPEND)
     {
         mos_list_node_delete(&(to_ready_task->task_list));
@@ -451,14 +463,16 @@ void mos_task_insert_ready_table_list(mos_tcb_t *to_ready_task)
     {
         mos_task_remove_delay_list(to_ready_task);
     }
-	
+
 #if (MOS_CONFIG_USE_IPC == YES)
+
     if (!mos_list_is_empty(&to_ready_task->task_ipc_list))
     {
         mos_list_node_delete(&to_ready_task->task_ipc_list);
     }
+
 #endif
-	
+
     /* 修改任务状态为就绪态 */
     to_ready_task->task_state = TASK_READY;
     /* 将任务插入就绪列表 */
@@ -471,7 +485,7 @@ void mos_task_insert_ready_table_list(mos_tcb_t *to_ready_task)
 /**
  * @brief 将任务结点从就绪列表删除
  */
-void mos_task_remove_ready_table_list(mos_list_t *task_list_ready_table, mos_tcb_t *mos_tcb)
+void mos_task_remove_ready_table_list(mos_tcb_t *mos_tcb)
 {
     /* 将任务从就绪列表中移除 */
     mos_list_node_delete(&(mos_tcb->task_list));
@@ -479,7 +493,7 @@ void mos_task_remove_ready_table_list(mos_list_t *task_list_ready_table, mos_tcb
     /* 将任务在优先级位图中对应的位清除 */
 #if (MOS_CONFIG_USE_TIME_SLICING == YES)
 
-    if (mos_list_is_empty(&(task_list_ready_table[mos_tcb->task_priority])))
+    if (mos_list_is_empty(&(g_mos_task_list_ready_table[mos_tcb->task_priority])))
     {
         g_mos_task_priority_flag_32bit &= ~(1UL << (31UL - mos_tcb->task_priority));
     }
@@ -525,24 +539,24 @@ void mos_task_insert_delay_list(mos_list_t *delay_list, mos_list_t *task_node, m
  */
 void mos_task_remove_delay_list(mos_tcb_t * to_remove_delay_tcb)
 {
-	 mos_tcb_t * delay_next_task_tcb = NULL;
-     
-	 /* 将任务从延时列表移除，消除等待状态 */
-     mos_list_node_delete(&to_remove_delay_tcb->task_list);
-     /* 重置任务控制块的task_tick_wake */
-     to_remove_delay_tcb->task_tick_wake = 0L;
+    mos_tcb_t * delay_next_task_tcb = NULL;
 
-     /* 延时列表为空，设置g_mos_task_next_task_unblock_tick为可能的最大值 */
-     if(mos_list_is_empty(g_mos_task_delay_list))
-     {
-         g_mos_task_next_task_unblock_tick = MOS_MAX_DELAY;
-     }
-     /* 延时列表不为空 */
-     else
-     {
-         delay_next_task_tcb = MOS_LIST_ENTRY(g_mos_task_delay_list->next, mos_tcb_t, task_list);
-         g_mos_task_next_task_unblock_tick = delay_next_task_tcb->task_tick_wake;
-     }
+    /* 将任务从延时列表移除，消除等待状态 */
+    mos_list_node_delete(&to_remove_delay_tcb->task_list);
+    /* 重置任务控制块的task_tick_wake */
+    to_remove_delay_tcb->task_tick_wake = 0L;
+
+    /* 延时列表为空，设置g_mos_task_next_task_unblock_tick为可能的最大值 */
+    if(mos_list_is_empty(g_mos_task_delay_list))
+    {
+        g_mos_task_next_task_unblock_tick = MOS_MAX_DELAY;
+    }
+    /* 延时列表不为空 */
+    else
+    {
+        delay_next_task_tcb = MOS_LIST_ENTRY(g_mos_task_delay_list->next, mos_tcb_t, task_list);
+        g_mos_task_next_task_unblock_tick = delay_next_task_tcb->task_tick_wake;
+    }
 }
 
 /**

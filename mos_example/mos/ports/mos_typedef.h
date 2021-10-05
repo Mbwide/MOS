@@ -33,35 +33,35 @@
 
 
 /*基础数据类型重定义*/
-typedef signed   char                   mos_int8_t;
-typedef signed   short                  mos_int16_t;
-typedef signed   int					mos_int32_t;
-typedef unsigned char					mos_uint8_t;
-typedef unsigned short					mos_uint16_t;
-typedef unsigned int					mos_uint32_t;
-typedef unsigned int					mos_bool_t;
+typedef signed   char                  mos_int8_t;
+typedef signed   short                 mos_int16_t;
+typedef signed   int                   mos_int32_t;
+typedef unsigned char                  mos_uint8_t;
+typedef unsigned short                 mos_uint16_t;
+typedef unsigned int                   mos_uint32_t;
+typedef unsigned int                   mos_bool_t;
 
-typedef unsigned int                    mos_tick_t;
-typedef unsigned int					mos_err_t;
+typedef unsigned int                   mos_tick_t;
+typedef unsigned int                   mos_err_t;
 
-typedef unsigned long					mos_ubase_t;
-typedef signed   long					mos_base_t;
+typedef unsigned long                  mos_ubase_t;
+typedef signed   long                  mos_base_t;
 
 
 /* MOS 错误码 */
-#define MOS_EOK        0    /* 没有错误*/
-#define MOS_ERROR      1    /* 有错误 */
-#define MOS_ETIMEOUT   2    /* 超时 */
-#define MOS_EFULL      3    /* 资源满 */
-#define MOS_EEMPTY     4    /* 资源空 */
-#define MOS_ENOMEM     5    /* 内存不足 */
-#define MOS_ENULL      6    /* 非法地址 */
+#define MOS_EOK                        0    /* 没有错误*/
+#define MOS_ERROR                      1    /* 有错误 */
+#define MOS_ETIMEOUT                   2    /* 超时 */
+#define MOS_EFULL                      3    /* 资源满 */
+#define MOS_EEMPTY                     4    /* 资源空 */
+#define MOS_ENOMEM                     5    /* 内存不足 */
+#define MOS_ENULL                      6    /* 非法地址 */
 
 
 /* MDK 编译器 */
 #ifdef __CC_ARM
-    #define MOS_INLINE						static __inline
-    #define ALIGN(n)                    	__attribute__((aligned(n)))
+    #define MOS_INLINE                 static __inline
+    #define ALIGN(n)                   __attribute__((aligned(n)))
 #endif
 
 /**
@@ -76,14 +76,14 @@ typedef signed   long					mos_base_t;
 
 
 /*其他数据类型定义 */
-#define TRUE							(1)
-#define FALSE							(0)
+#define TRUE                           (1)
+#define FALSE                          (0)
 
-#define YES								(1)
-#define NO								(0)
+#define YES                            (1)
+#define NO                             (0)
 
-#define NULL							((void *)0)
+#define NULL                           ((void *)0)
 
-#define MOS_MAX_DELAY					(0xffffffffUL)
+#define MOS_MAX_DELAY                  (0xffffffffUL)
 
 #endif /* _MOS_TYPEDEF_H */

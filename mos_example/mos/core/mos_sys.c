@@ -57,7 +57,7 @@ void mos_sys_interrupt_enter(void)
 }
 
 /**
- * @brief 中断服务函数进入时会调用该函数，中断嵌套计数减
+ * @brief 中断服务函数退出时会调用该函数，中断嵌套计数减
  *
  * @note 不要在应用程序中调用该函数
  */
@@ -75,3 +75,14 @@ void mos_sys_interrupt_leave(void)
     mos_port_exit_critical_irq(temp);
 }
 
+/**
+ * @brief 获取中断嵌套计数
+ *
+ * @return 中断嵌套计数值
+ *
+ * @note 不要在应用程序中调用该函数
+ */
+mos_uint8_t mos_sys_get_interrupt_nest_count(void)
+{
+    return g_mos_interrupt_nest;
+}

@@ -1,5 +1,4 @@
-#ifndef __RTTHREAD_CFG_H__
-#define __RTTHREAD_CFG_H__
+#ifndef __MOS_H
+#define __MOS_H
 
-
-#endif
+#endif /* _MOS_H */

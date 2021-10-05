@@ -26,10 +26,10 @@
 #define MOS_CONFIG_TASK_IDLE_STACK_SIZE		(512)
 
 /* 配置系统时钟周期 */
-#define MOS_CONFIG_TICK_PER_SECOND	    	(100)
+#define MOS_CONFIG_TICK_PER_SECOND	    	(1000)
 
 /* 是否使用时间片轮转调度 */
-#define MOS_CONFIG_USE_TIME_SLICING		    (NO)
+#define MOS_CONFIG_USE_TIME_SLICING		    (YES)
 
 /* 配置动态内存大小，单位byte */
 #define MOS_CONFIG_HEAP_SIZE	    		(20 * 1024)

@@ -27,7 +27,10 @@ mos_tcb_t task2_tcb;
 mos_tcb_t task3_tcb;
 
 /* 同步信号量 */
-mos_sync_t sync_1;
+mos_sync_t *sync_1;
+
+/* 互斥信号量 */
+mos_mutex_t *mutex_1;
 
 /* 软件延时，模拟任务运行 */
 void delay (uint32_t count)
@@ -41,26 +44,28 @@ void task1_entry(void)
     for ( ;; )
     {
         flag1 = 1;
-        mos_task_delay(1);
+        //mos_task_delay(1);
         //os_task_suspend(&task1_tcb);
         //mos_ipc_sync_give(&sync_1);
+        mos_ipc_mutex_take(mutex_1, MOS_MAX_DELAY);
+        //delay(5000000);
+        mos_ipc_mutex_give(mutex_1);
         flag1 = 0;
-        mos_task_delay(1);
+        mos_task_delay(10);
     }
 }
 
 /* 任务2 */
 void task2_entry(void)
 {
-    mos_err_t sync_data;
-
     for ( ;; )
     {
         flag2 = 1;
         mos_task_delay(10);
+        //mos_ipc_sync_take(&sync_1, MOS_MAX_DELAY);
         //mos_task_resume(&task1_tcb);
         flag2 = 0;
-        mos_task_delay(1);
+        mos_task_delay(10);
     }
 }
 
@@ -70,9 +75,14 @@ void task3_entry(void)
     for ( ;; )
     {
         flag3 = 1;
-        mos_task_delay(1);
+        //mos_task_delay(1);
+        mos_ipc_mutex_take(mutex_1, MOS_MAX_DELAY);
         flag3 = 0;
-        mos_task_delay(1);
+        delay(5000000);
+        flag3 = 1;
+        mos_ipc_mutex_give(mutex_1);
+        mos_task_delay(100);
+
     }
 }
 
@@ -86,7 +96,9 @@ int main()
     mos_port_entry_critical();
     mos_init_core();
 
-    mos_ipc_sync_creat(&sync_1);
+    sync_1 = mos_ipc_sync_creat();
+    mutex_1 = mos_ipc_mutex_creat();
+
     mos_task_create(&task1_tcb,
                     task1_entry,
                     1UL,
