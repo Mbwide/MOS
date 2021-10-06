@@ -109,6 +109,7 @@ void mos_heap_init(void)
 void *mos_malloc(mos_ubase_t need_size)
 {
     void *return_ptr = NULL;
+	mos_base_t temp;
     mos_heap_head_t *pre_block;
     mos_heap_head_t *cur_block;
     mos_heap_head_t *new_block;
@@ -128,7 +129,7 @@ void *mos_malloc(mos_ubase_t need_size)
     if (need_size < BLOCK_MIN_SIZE) need_size = BLOCK_MIN_SIZE;
 
     /* 进入临界区 */
-    mos_port_entry_critical();
+    temp = mos_port_entry_critical_irq();
 
     pre_block = &heap_head_start;
     cur_block = heap_head_start.next;
@@ -170,7 +171,7 @@ void *mos_malloc(mos_ubase_t need_size)
     heap_free_size -= cur_block->block_size;
 
     /* 退出临界区 */
-    mos_port_exit_critical();
+    mos_port_exit_critical_irq(temp);
 
     return return_ptr;
 }
@@ -181,6 +182,7 @@ void *mos_malloc(mos_ubase_t need_size)
  */
 void mos_free(void *mem_add)
 {
+	mos_base_t temp;
     mos_heap_head_t *cur_block;
     mos_uint8_t * p_block;
 
@@ -196,7 +198,7 @@ void mos_free(void *mem_add)
             cur_block->used = 0;
 
             /* 进入临界区 */
-            mos_port_entry_critical();
+            temp = mos_port_entry_critical_irq();
 
             /* 修改剩余内存大小 */
             heap_free_size += cur_block->block_size;
@@ -205,7 +207,7 @@ void mos_free(void *mem_add)
             block_insert_free_list(cur_block);
 
             /* 退出临界区 */
-            mos_port_exit_critical();
+            mos_port_exit_critical_irq(temp);
         }
     }
 }

@@ -64,8 +64,6 @@ mos_port_start_first_task  PROC
     ;使能全局中断 
     CPSIE I
     CPSIE F
-    DSB
-    ISB
 	
     ;调用SVC去启动第一个任务 
     SVC 0  
@@ -114,8 +112,6 @@ PendSV_Handler    PROC
     STMDB  sp!, {r1, r3, r14}  ;将r1, R3和R14临时压入堆栈，因为即将调用函数mos_task_switch_context,
                                ;调用函数时,返回地址自动保存到R14中,所以一旦调用发生,R14的值会被覆盖,因此需要入栈保护;
                                ;R3保存的当前激活的任务TCB指针地址,函数调用后会用到,因此也要入栈保护
-    DSB
-    ISB
 	
     BL     mos_task_switch_context
 	
