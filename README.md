@@ -2,7 +2,7 @@
 
 ### 1 简介
 
-**介绍：**一款开源的实时操作系统MicroOS，支持 ARM 系列 M3 内核架构和 M4 内核架构（暂不支持FPU），基础框架已完成**任务调度、中断管理以及内存管理以及任务间通信的同步信号量**，已经在STM32F103芯片上移植并且顺利运行
+**介绍：**一款开源的实时操作系统MicroOS，支持 ARM 系列 M3 内核架构和 M4 内核架构（暂不支持FPU），基础框架已完成**任务调度、中断管理以及内存管理以及任务间通信(同步信号量与互斥信号量)，同时支持部分shell功能**，已经在STM32F103芯片上移植并且顺利运行
 
 **特性：** 目前支持静态任务创建，动态任务创建，多优先级，支持时间片轮转调度，同步信号量，并持续开发中
 
@@ -18,12 +18,16 @@
      - mos_task.h
      - mos_tick.h
      - mos_heap.h
+     - mos_misc.h
+     - mos_shell.h
    - mos_init.c       内核初始化
    - mos_misc.c    内核杂项（字符处理等）
    - mos_sys.c       系统支持(临界区等)
    - mos_task.c     任务与调度（任务创建，延时，调度器开启等）
    - mos_tick.c      定时器
    - mos_heap.c   动态内存管理
+   - mos_misc.c   杂项（字符串处理，printf重映射）
+   - mos_shell.c   shell功能 
 3. **ports  硬件接口文件**
    - mos_hw.c 	系统硬件支持（栈初始化等）
    - mos_hw.h 
@@ -54,11 +58,13 @@
    - 动态内存管理
 4. 任务间通信
    - 同步信号量
+   - 互斥信号量
+5. SHELL命令台
 
 ##### 3.3 硬件支持层
 
 1. 硬件支持的汇编实现（临界区，任务切换的上下文保存部分）
-2. 硬件支持的接口初始化（任务栈，定时器）
+2. 硬件支持的接口初始化（任务栈，定时器，shell硬件接口）
 3. 异常服务函数
 
 ### 4 移植过程（STM32F103标准库）
@@ -101,10 +107,21 @@
    - PendSV_Handler
    - SysTick_Handler
 2. 配置mos_user_config.h 
-   - 设置CPU频率
-   - 设置MOS时钟周期
+   - 设置CPU频率 MOS_CONFIG_CPU_FREQUENCY
+   - 设置MOS时钟周期 MOS_CONFIG_TICK_PER_SECOND
    - **#define MOS_CONFIG_USE_DYNAMIC_HEAP		    (YES)**
-3. 引入头文件 mos_init.h mos_task.h mos_port.h
+   - 设置动态内存大小 MOS_CONFIG_HEAP_SIZE
+   - 如果使用shell 和debug输出接口
+     - **#define MOS_CONFIG_USE_SHELL                      (YES)**
+     - **#define MOS_CONFIG_USE_DEBUG_PRINTF	 (YES)**
+     - **#define MOS_SHELL_DEBUG_PORT                    (USART1)**   使用串口
+3. 引入头文件 mos.h mos_init.h mos_task.h mos_port.h（mos_ipc.h）
+4. 修改port.h文件
+   - CPU_DATA CPU数据
+5. 修改port.c文件
+   - mos_port_output shell/debug输出接口
+   - USART1_IRQHandler 串口1中断shell/debug输入接口)
+   - mos_port_bsp_init 初始化shell接口
 
 ##### 4.2.2任务创建
 
