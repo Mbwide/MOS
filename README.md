@@ -9,8 +9,26 @@
 **log：**
 
 1. 20211007：添加shell的stm32实现demo
+2. 20211008：适配stm32F103RCT6（mini板）替换FreeRTOS，移植LCD demo，驱动源码来自正点原子例程
+   - FreeRTOS实验14-4 FreeRTOS互斥信号量操作实验
 
-### 2 源码目录
+### 2 MOS结构
+
+#### 2.1 MOS架构图
+
+1. 红色为目前正在设计编写的部分
+
+<img src="images/frame.png" alt="frame" style="zoom: 33%;" />
+
+#### 2.2 MOS文件框架
+
+<img src="images/frame_1.png" alt="frame_1" style="zoom: 67%;" />
+
+#### 2.3 MOS设计框架
+
+<img src="images/frame_2.png" alt="frame_2" style="zoom: 67%;" />
+
+### 3 源码目录
 
 1. **mos_user_config.h  用户配置文件**
 2. **core 内核文件**
@@ -40,15 +58,15 @@
    - mos_port.h
    - mos_typedef.c  数据类型重定义
 
-### 3 设计框架
+### 4 设计框架
 
 > 设计框架按层分类，由三层组成，**用户层，内核层以及硬件支持层**
 
-##### 3.1 用户层
+##### 4.1 用户层
 
 1. config.h，可裁剪，配置相关需求
 
-##### 3.2 内核层
+##### 4.2 内核层
 
 1. 任务管理
    - 任务创建
@@ -65,17 +83,17 @@
    - 互斥信号量
 5. SHELL命令台
 
-##### 3.3 硬件支持层
+##### 4.3 硬件支持层
 
 1. 硬件支持的汇编实现（临界区，任务切换的上下文保存部分）
 2. 硬件支持的接口初始化（任务栈，定时器，shell硬件接口）
 3. 异常服务函数
 
-### 4 移植过程（STM32F103标准库）
+### 5 移植过程（STM32F103标准库）
 
-#### 4.1 静态方法
+#### 5.1 静态方法
 
-##### 4.1.1 修改接口文件
+##### 5.1.1 修改接口文件
 
 1. 屏蔽标准库中断服务函数
    - SVC_Handler
@@ -87,7 +105,7 @@
    - **#define MOS_CONFIG_USE_DYNAMIC_HEAP		    (NO)**
 3. 引入头文件 mos_init.h mos_task.h mos_port.h
 
-##### 4.1.2任务创建
+##### 5.1.2任务创建
 
 1. 设置系统中断优先级分组
 2. 硬件初始化
@@ -102,9 +120,9 @@
 6. 退出临界区
 7. 任务调度开启
 
-#### 4.2 动态方法
+#### 5.2 动态方法
 
-##### 4.2.1 修改接口文件
+##### 5.2.1 修改接口文件
 
 1. 屏蔽标准库中断服务函数
    - SVC_Handler
@@ -127,7 +145,7 @@
    - USART1_IRQHandler 串口1中断shell/debug输入接口)
    - mos_port_bsp_init 初始化shell接口
 
-##### 4.2.2任务创建
+##### 5.2.2任务创建
 
 1. 设置系统中断优先级分组
 2. 硬件初始化
@@ -140,3 +158,18 @@
    - 任务堆栈大小，单位为字
 6. 退出临界区
 7. 任务调度开启
+
+### 6 其他
+
+##### 6.1 shell指令集
+
+```c
+ //目前支持的指令集
+ help: CMD Help Information
+ ls  : Hardware And OS Information
+       -task: OS TASK  Information
+       -ipc : OS IPC   Information
+       -heap: OS HEAP  Information
+       -time: OS TIME  Information
+```
+
