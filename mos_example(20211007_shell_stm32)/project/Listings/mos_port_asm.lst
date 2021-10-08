@@ -1,0 +1,404 @@
+
+
+
+ARM Macro Assembler    Page 1 
+
+
+    1 00000000         ;/**
+    2 00000000         ;  *****************************************************
+                       *************************
+    3 00000000         ;  * Micro OS V1.0 - Copyright (C) 2021 Real Time Engine
+                       ers Ltd.
+    4 00000000         ;  * All rights reserved.
+    5 00000000         ;  * This file is part of Micro OS.
+    6 00000000         ;  *
+    7 00000000         ;  * This program is free software; you can redistribute
+                        it and/or modify
+    8 00000000         ;  * it under the terms of the GNU General Public Licens
+                       e as published by
+    9 00000000         ;  * the Free Software Foundation; either version 2 of t
+                       he License, or
+   10 00000000         ;  * (at your option) any later version.
+   11 00000000         ;  *
+   12 00000000         ;  * This program is distributed in the hope that it wil
+                       l be useful,
+   13 00000000         ;  * but WITHOUT ANY WARRANTY; without even the implied 
+                       warranty of
+   14 00000000         ;  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE
+                       .  See the
+   15 00000000         ;  * GNU General Public License for more details.
+   16 00000000         ;  *****************************************************
+                       *************************
+   17 00000000         ;  */
+   18 00000000         ;/**
+   19 00000000         ;  *****************************************************
+                       *************************
+   20 00000000         ;  * @file    mos_port_asm.s
+   21 00000000         ;  * @version V1.0.0
+   22 00000000         ;  * @date    2021-08-20
+   23 00000000         ;  * @brief   ÓÃ»§ÏµÍ³Ö§³Ö£¬»ã±àÊµÏÖ
+   24 00000000         ;  *****************************************************
+                       *************************
+   25 00000000         ;  * @note
+   26 00000000         ;  *
+   27 00000000         ;  *****************************************************
+                       *************************
+   28 00000000         ;  */
+   29 00000000         
+   30 00000000         
+   31 00000000                 EXPORT           SVC_Handler
+   32 00000000                 EXPORT           PendSV_Handler
+   33 00000000         
+   34 00000000                 EXPORT           mos_port_start_first_task
+   35 00000000                 EXPORT           mos_port_task_scheduler
+   36 00000000                 EXPORT           mos_port_interrupt_disable
+   37 00000000                 EXPORT           mos_port_interrupt_enable
+   38 00000000                 EXPORT           mos_port_interrupt_disable_temp
+   39 00000000                 EXPORT           mos_port_interrupt_enable_temp
+   40 00000000         
+   41 00000000                 IMPORT           g_cur_task_tcb
+   42 00000000                 IMPORT           mos_task_switch_context
+   43 00000000 E000ED04 
+                       MOS_NVIC_INT_CTRL
+                               EQU              0xE000ED04
+   44 00000000 E000ED20 
+                       MOS_NVIC_SYSPRI2
+
+
+
+ARM Macro Assembler    Page 2 
+
+
+                               EQU              0xE000ED20  ;ÓÅÏÈ¼¶¼Ä´æÆ÷µØÖ·
+   45 00000000 F0F00000 
+                       MOS_NVIC_PENDSV_PRI
+                               EQU              0xF0F00000  ;ÅäÖÃPendSVºÍSysTic
+                                                            kµÄÖÐ¶ÏÓÅÏÈ¼¶Îª×îµÍ
+                                                            
+   46 00000000 10000000 
+                       MOS_NVIC_PENDSVSET
+                               EQU              0x10000000
+   47 00000000         
+   48 00000000         
+   49 00000000         ;*******************************************************
+                       ******************
+   50 00000000         ;                              ´úÂë²úÉúÖ¸Áî
+   51 00000000         ;*******************************************************
+                       ******************
+   52 00000000                 AREA             |.text|, CODE, READONLY, ALIGN=
+2
+   53 00000000                 THUMB
+   54 00000000                 REQUIRE8
+   55 00000000                 PRESERVE8
+   56 00000000         
+   57 00000000         mos_port_start_first_task
+                               PROC
+   58 00000000         
+   59 00000000         ;ÅäÖÃPendSVÖÐ¶ÏÓÅÏÈ¼¶Îª×îµÍ
+   60 00000000 4820            LDR              r0, =MOS_NVIC_SYSPRI2
+   61 00000002 4921            LDR              r1, =MOS_NVIC_PENDSV_PRI
+   62 00000004 6001            STR              R1, [R0]
+   63 00000006         
+   64 00000006         ;Ê¹ÄÜÈ«¾ÖÖÐ¶Ï 
+   65 00000006 B662            CPSIE            I
+   66 00000008 B661            CPSIE            F
+   67 0000000A         ;DSB
+   68 0000000A         ;ISB
+   69 0000000A         
+   70 0000000A         ;µ÷ÓÃSVCÈ¥Æô¶¯µÚÒ»¸öÈÎÎñ 
+   71 0000000A DF00            SVC              0
+   72 0000000C         
+   73 0000000C                 ENDP
+   74 0000000C         
+   75 0000000C         SVC_Handler
+                               PROC
+   76 0000000C 4B1F            LDR              r3, =g_cur_task_tcb
+   77 0000000E         
+   78 0000000E 6819            LDR              r1, [r3]
+   79 00000010 6808            LDR              r0, [r1]    ;´ËÊ±r0µÄÖµÎª¶ÑÕ»Ö¸
+                                                            Õë                 
+                                                                  
+   80 00000012         
+   81 00000012 E8B0 0FF0       LDMFD            r0!, {r4 - r11} ;½«Ïß³ÌÕ»Ö¸Õër1
+                                                            (²Ù×÷Ö®Ç°ÏÈµÝ¼õ)Ö¸Ï
+                                                            òµÄÄÚÈÝ¼ÓÔØµ½CPU¼Ä´
+                                                            æÆ÷r4~r11
+   82 00000016 F380 8809       MSR              psp, r0     ;½«r0µÄÖµ£¬¼´ÈÎÎñµÄ
+                                                            Õ»Ö¸Õë¸üÐÂµ½psp
+   83 0000001A F3BF 8F6F       ISB
+   84 0000001E F04F 0000       MOV              r0, #0
+   85 00000022         ;MOV   lr, #0xFFFFFFF9
+
+
+
+ARM Macro Assembler    Page 3 
+
+
+   86 00000022 F04E 0E0D       ORR              lr, #0xd    ;µ±´ÓSVCÖÐ¶Ï·þÎñÍË³
+                                                            öÇ°,Í¨¹ýÏòr14¼Ä´æÆ÷
+                                                            ×îºó4Î»°´Î»»òÉÏ0x0D
+                                                            £¬È·±£Òì³£·µ»ØÊ¹ÓÃµ
+                                                            Ä¶ÑÕ»Ö¸ÕëÊÇPSP£¬¼´L
+                                                            R¼Ä´æÆ÷µÄÎ»2ÒªÎª1
+   87 00000026         ;Ê¹µÃÓ²¼þÔÚÍË³öÊ±Ê¹ÓÃ½ø³Ì¶ÑÕ»Ö¸ÕëPSPÍê³É³öÕ»²Ù×÷²¢·µ»Øºó
+                       ½øÈëÏß³ÌÄ£Ê½¡¢·µ»ØThumb×´Ì¬ */
+   88 00000026 4770            BX               lr
+   89 00000028         
+   90 00000028                 ENDP
+   91 00000028         
+   92 00000028         mos_port_task_scheduler
+                               PROC
+   93 00000028 4819            LDR              R0, =MOS_NVIC_INT_CTRL
+   94 0000002A F04F 5180       LDR              R1, =MOS_NVIC_PENDSVSET
+   95 0000002E 6001            STR              R1, [R0]
+   96 00000030 4770            BX               LR
+   97 00000032         
+   98 00000032 BF00            NOP
+   99 00000034                 ENDP
+  100 00000034         
+  101 00000034         PendSV_Handler
+                               PROC
+  102 00000034 F3EF 8110       MRS              r1, PRIMASK
+  103 00000038 B672            CPSID            I
+  104 0000003A         
+  105 0000003A F3EF 8009       MRS              r0, psp
+  106 0000003E F3BF 8F6F       ISB
+  107 00000042         
+  108 00000042 4B12            LDR              r3, =g_cur_task_tcb
+  109 00000044 681A            LDR              r2, [r3]    ;¼ÓÔØg_cur_task_tcb
+                                                            µ½r2,µ±Ç°ÈÎÎñspÖ¸Õë
+                                                            
+  110 00000046         
+  111 00000046 E920 0FF0       STMDB            r0!, {r4-r11} ;½«CPU¼Ä´æÆ÷r4~r1
+                                                            1µÄÖµ´æ´¢µ½r0Ö¸ÏòµÄ
+                                                            µØÖ· 
+  112 0000004A 6010            STR              r0, [r2]    ;½«ÈÎÎñÕ»µÄÐÂµÄÕ»¶¥
+                                                            Ö¸Õë´æ´¢µ½µ±Ç°ÈÎÎñT
+                                                            CBµÄµÚÒ»¸ö³ÉÔ±£¬¼´s
+                                                            pÖ¸Õë     
+  113 0000004C         
+  114 0000004C B50A            STMDB            sp!, {r1, r3, r14} ;½«r1, R3ºÍR
+                                                            14ÁÙÊ±Ñ¹Èë¶ÑÕ»£¬ÒòÎ
+                                                            ª¼´½«µ÷ÓÃº¯Êýmos_ta
+                                                            sk_switch_context,
+  115 0000004E         ;µ÷ÓÃº¯ÊýÊ±,·µ»ØµØÖ·×Ô¶¯±£´æµ½R14ÖÐ,ËùÒÔÒ»µ©µ÷ÓÃ·¢Éú,R14
+                       µÄÖµ»á±»¸²¸Ç,Òò´ËÐèÒªÈëÕ»±£»¤;
+  116 0000004E         ;R3±£´æµÄµ±Ç°¼¤»îµÄÈÎÎñTCBÖ¸ÕëµØÖ·,º¯Êýµ÷ÓÃºó»áÓÃµ½,Òò´Ë
+                       Ò²ÒªÈëÕ»±£»¤
+  117 0000004E         
+  118 0000004E F7FF FFFE       BL               mos_task_switch_context
+  119 00000052         
+  120 00000052 E8BD 400A       LDMIA            sp!, {r1, r3, r14} 
+                                                            ;»Ö¸´r1,r3ºÍr14
+  121 00000056 681A            LDR              r2,  [r3]
+  122 00000058 6810            LDR              r0,  [r2]   ;µ±Ç°¼¤»îµÄÈÎÎñTCBµ
+                                                            ÚÒ»Ïî±£´æÁËÈÎÎñ¶ÑÕ»
+
+
+
+ARM Macro Assembler    Page 4 
+
+
+                                                            µÄÕ»¶¥,ÏÖÔÚÕ»¶¥Öµ´æ
+                                                            ÈëR0
+  123 0000005A E8B0 0FF0       LDMIA            r0!, {r4-r11} ;³öÕ» 
+  124 0000005E F380 8809       MSR              psp, r0
+  125 00000062         
+  126 00000062         ;»Ö¸´ÖÐ¶Ï
+  127 00000062 F381 8810       MSR              PRIMASK, r1
+  128 00000066         ;MOV   lr, #0xFFFFFFF9
+  129 00000066 F04E 0E04       ORR              lr, lr, #0x04 ;È·±£Òì³£·µ»ØÊ¹ÓÃ
+                                                            µÄ¶ÑÕ»Ö¸ÕëÊÇPSP£¬¼´
+                                                            LR¼Ä´æÆ÷µÄÎ»2ÒªÎª1
+  130 0000006A 4770            BX               lr
+  131 0000006C         
+  132 0000006C                 ENDP
+  133 0000006C         
+  134 0000006C         
+  135 0000006C         mos_port_interrupt_disable_temp
+                               PROC
+  136 0000006C F3EF 8010       MRS              R0, PRIMASK
+  137 00000070 B672            CPSID            I
+  138 00000072 4770            BX               LR
+  139 00000074                 ENDP
+  140 00000074         
+  141 00000074         mos_port_interrupt_enable_temp
+                               PROC
+  142 00000074 F380 8810       MSR              PRIMASK, r0
+  143 00000078 4770            BX               LR
+  144 0000007A         
+  145 0000007A BF00            NOP
+  146 0000007C                 ENDP
+  147 0000007C         
+  148 0000007C         mos_port_interrupt_disable
+                               PROC
+  149 0000007C B672            CPSID            I
+  150 0000007E 4770            BX               LR
+  151 00000080                 ENDP
+  152 00000080         
+  153 00000080         mos_port_interrupt_enable
+                               PROC
+  154 00000080 B662            CPSIE            I
+  155 00000082 4770            BX               LR
+  156 00000084                 ENDP
+  157 00000084         
+  158 00000084                 END
+              E000ED20 
+              F0F00000 
+              00000000 
+              E000ED04 
+Command Line: --debug --xref --diag_suppress=9931 --cpu=Cortex-M3 --apcs=interw
+ork --depend=.\objects\mos_port_asm.d -o.\objects\mos_port_asm.o -I.\RTE\_Targe
+t_1 -ID:\Keil_v5\ARM\PACK\Keil\STM32F1xx_DFP\2.2.0\Device\Include -ID:\Keil_v5\
+ARM\CMSIS\Include --predefine="__MICROLIB SETA 1" --predefine="__UVISION_VERSIO
+N SETA 529" --predefine="STM32F10X_HD SETA 1" --list=.\listings\mos_port_asm.ls
+t ..\mos\ports\mos_port_asm.s
+
+
+
+ARM Macro Assembler    Page 1 Alphabetic symbol ordering
+Relocatable symbols
+
+.text 00000000
+
+Symbol: .text
+   Definitions
+      At line 52 in file ..\mos\ports\mos_port_asm.s
+   Uses
+      None
+Comment: .text unused
+PendSV_Handler 00000034
+
+Symbol: PendSV_Handler
+   Definitions
+      At line 101 in file ..\mos\ports\mos_port_asm.s
+   Uses
+      At line 32 in file ..\mos\ports\mos_port_asm.s
+Comment: PendSV_Handler used once
+SVC_Handler 0000000C
+
+Symbol: SVC_Handler
+   Definitions
+      At line 75 in file ..\mos\ports\mos_port_asm.s
+   Uses
+      At line 31 in file ..\mos\ports\mos_port_asm.s
+Comment: SVC_Handler used once
+mos_port_interrupt_disable 0000007C
+
+Symbol: mos_port_interrupt_disable
+   Definitions
+      At line 148 in file ..\mos\ports\mos_port_asm.s
+   Uses
+      At line 36 in file ..\mos\ports\mos_port_asm.s
+Comment: mos_port_interrupt_disable used once
+mos_port_interrupt_disable_temp 0000006C
+
+Symbol: mos_port_interrupt_disable_temp
+   Definitions
+      At line 135 in file ..\mos\ports\mos_port_asm.s
+   Uses
+      At line 38 in file ..\mos\ports\mos_port_asm.s
+Comment: mos_port_interrupt_disable_temp used once
+mos_port_interrupt_enable 00000080
+
+Symbol: mos_port_interrupt_enable
+   Definitions
+      At line 153 in file ..\mos\ports\mos_port_asm.s
+   Uses
+      At line 37 in file ..\mos\ports\mos_port_asm.s
+Comment: mos_port_interrupt_enable used once
+mos_port_interrupt_enable_temp 00000074
+
+Symbol: mos_port_interrupt_enable_temp
+   Definitions
+      At line 141 in file ..\mos\ports\mos_port_asm.s
+   Uses
+      At line 39 in file ..\mos\ports\mos_port_asm.s
+Comment: mos_port_interrupt_enable_temp used once
+mos_port_start_first_task 00000000
+
+Symbol: mos_port_start_first_task
+
+
+
+ARM Macro Assembler    Page 2 Alphabetic symbol ordering
+Relocatable symbols
+
+   Definitions
+      At line 57 in file ..\mos\ports\mos_port_asm.s
+   Uses
+      At line 34 in file ..\mos\ports\mos_port_asm.s
+Comment: mos_port_start_first_task used once
+mos_port_task_scheduler 00000028
+
+Symbol: mos_port_task_scheduler
+   Definitions
+      At line 92 in file ..\mos\ports\mos_port_asm.s
+   Uses
+      At line 35 in file ..\mos\ports\mos_port_asm.s
+Comment: mos_port_task_scheduler used once
+9 symbols
+
+
+
+ARM Macro Assembler    Page 1 Alphabetic symbol ordering
+Absolute symbols
+
+MOS_NVIC_INT_CTRL E000ED04
+
+Symbol: MOS_NVIC_INT_CTRL
+   Definitions
+      At line 43 in file ..\mos\ports\mos_port_asm.s
+   Uses
+      At line 93 in file ..\mos\ports\mos_port_asm.s
+Comment: MOS_NVIC_INT_CTRL used once
+MOS_NVIC_PENDSVSET 10000000
+
+Symbol: MOS_NVIC_PENDSVSET
+   Definitions
+      At line 46 in file ..\mos\ports\mos_port_asm.s
+   Uses
+      At line 94 in file ..\mos\ports\mos_port_asm.s
+Comment: MOS_NVIC_PENDSVSET used once
+MOS_NVIC_PENDSV_PRI F0F00000
+
+Symbol: MOS_NVIC_PENDSV_PRI
+   Definitions
+      At line 45 in file ..\mos\ports\mos_port_asm.s
+   Uses
+      At line 61 in file ..\mos\ports\mos_port_asm.s
+Comment: MOS_NVIC_PENDSV_PRI used once
+MOS_NVIC_SYSPRI2 E000ED20
+
+Symbol: MOS_NVIC_SYSPRI2
+   Definitions
+      At line 44 in file ..\mos\ports\mos_port_asm.s
+   Uses
+      At line 60 in file ..\mos\ports\mos_port_asm.s
+Comment: MOS_NVIC_SYSPRI2 used once
+4 symbols
+
+
+
+ARM Macro Assembler    Page 1 Alphabetic symbol ordering
+External symbols
+
+g_cur_task_tcb 00000000
+
+Symbol: g_cur_task_tcb
+   Definitions
+      At line 41 in file ..\mos\ports\mos_port_asm.s
+   Uses
+      At line 76 in file ..\mos\ports\mos_port_asm.s
+      At line 108 in file ..\mos\ports\mos_port_asm.s
+
+mos_task_switch_context 00000000
+
+Symbol: mos_task_switch_context
+   Definitions
+      At line 42 in file ..\mos\ports\mos_port_asm.s
+   Uses
+      At line 118 in file ..\mos\ports\mos_port_asm.s
+Comment: mos_task_switch_context used once
+2 symbols
+350 symbols in table
